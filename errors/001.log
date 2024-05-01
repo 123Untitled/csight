@@ -1,0 +1,46 @@
+[1/2] compiling test/src/variant_tests.cpp
+FAILED: build/obj/e321f764d3c4eb113016a350b50dcc8821da3877.o
+/usr/bin/clang++ -std=c++2a -O0 -g3 -Wall -Wextra -Werror -Wpedantic -Weffc++ -Wno-unused -Wno-unused-variable -Wno-unused-parameter -Winline -Wconversion -Wsign-conversion -Wfloat-conversion -Wnarrowing -Wshadow -I./inc/3d -I./inc/bit -I./inc/containers -I./inc/conversions -I./inc/event -I./inc/exceptions -I./inc/execution -I./inc/invoke -I./inc/iterators -I./inc/math -I./inc/memory -I./inc/meta -I./inc/network -I./inc/random -I./inc/system -I./inc/terminal -I./inc/thread -I./inc/time -I./inc/utility -I./inc/visual -I./inc -I./test/inc -MMD -MF ./build/dep/e321f764d3c4eb113016a350b50dcc8821da3877.d -c test/src/variant_tests.cpp -o build/obj/e321f764d3c4eb113016a350b50dcc8821da3877.o
+In file included from test/src/variant_tests.cpp:2:
+In file included from ./inc/containers/variant.hpp:10:
+./inc/meta/type_at.hpp:27:4: error: static_assert failed due to requirement '3UL < sizeof...(A)' "TYPE_AT: INDEX OUT OF RANGE!"
+                        static_assert(IDX < sizeof...(A), "TYPE_AT: INDEX OUT OF RANGE!");
+                        ^             ~~~~~~~~~~~~~~~~~~
+./inc/meta/type_at.hpp:65:2: note: in instantiation of template class 'xns::impl::type_at<3, X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>' requested here
+        using type_at = typename impl::type_at<IDX, A...>::type;
+        ^
+./inc/indexed_element.hpp:50:22: note: in instantiation of template type alias 'type_at' requested here
+                        using type = xns::type_at<I, T...>;
+                                          ^
+./inc/indexed_element.hpp:56:2: note: in instantiation of template class 'xns::impl::indexed_element<3, xns::variant<X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>>' requested here
+        using indexed_element = typename xns::impl::indexed_element<I, T>::type;
+        ^
+./inc/containers/variant.hpp:418:65: note: in instantiation of template type alias 'indexed_element' requested here
+        inline constexpr auto get(xns::variant<T...>& variant) -> xns::indexed_element<I, xns::variant<T...>>& {
+                                                                       ^
+test/src/variant_tests.cpp:85:11: note: while substituting deduced template arguments into function template 'get' [with I = 3, T = <X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>]
+        auto c = xns::get<3>(xns::move(v0));
+                 ^
+In file included from test/src/variant_tests.cpp:2:
+./inc/containers/variant.hpp:430:3: error: static_assert failed due to requirement '3UL < sizeof...(T)' "): VARIANT: INDEX OUT OF BOUNDS :("
+                static_assert(I < sizeof...(T),
+                ^             ~~~~~~~~~~~~~~~~
+test/src/variant_tests.cpp:85:16: note: in instantiation of function template specialization 'xns::get<3UL, X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>' requested here
+        auto c = xns::get<3>(xns::move(v0));
+                      ^
+In file included from test/src/variant_tests.cpp:2:
+In file included from ./inc/containers/variant.hpp:10:
+./inc/meta/type_at.hpp:65:2: error: no type named 'type' in 'xns::impl::type_at<3, X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>'
+        using type_at = typename impl::type_at<IDX, A...>::type;
+        ^~~~~
+./inc/containers/variant.hpp:433:64: note: in instantiation of template type alias 'type_at' requested here
+                return xns::move(variant._storage.template to_reference<xns::type_at<I, T...>>());
+                                                                             ^
+test/src/variant_tests.cpp:85:16: note: in instantiation of function template specialization 'xns::get<3UL, X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>' requested here
+        auto c = xns::get<3>(xns::move(v0));
+                      ^
+3 errors generated.
+ninja: build stopped: subcommand failed.
+size: 0
+
+0 errors

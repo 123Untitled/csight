@@ -1,0 +1,189 @@
+
+/* -- all elements -- */
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+
+	/* font */
+	font-family: 'Space Mono', monospace;
+
+	/* text color */
+	color: #B1A6C3;
+
+	/* background color */
+	background: #241E26;
+}
+
+body {
+	overflow: hidden;
+}
+
+.wrapper {
+	/* border */
+	border: 1px solid #392F3C;
+	padding: 10px;
+
+	/* rounded corners */
+	border-radius: 20px 20px 20px 20px;
+
+	max-width: 1000px;
+	width: 100%;
+	margin: 10vh auto;
+}
+
+h1 {
+	font-size: 2em;
+	margin-bottom: 20px;
+	text-align:center;
+}
+
+input {
+	display: none;
+}
+
+label {
+	display: flex;
+
+	width: 100%;
+	height: 50px;
+
+	/* cursor on hover */
+	cursor: pointer;
+
+	/* non-selectable text */
+	user-select: none;
+
+	/* border */
+	border: 1px solid #392F3C;
+
+	/* rounded corners */
+	border-radius: 10px 10px 10px 10px;
+}
+
+label div:first-child {
+	width: 100%;
+	margin: 10px 10px 10px 20px;
+	font-size: 1.2em;
+}
+
+.content {
+
+	box-sizing: border-box;
+	font-size: 0.9em;
+	margin: 10px 10px;
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.1s ease;
+}
+
+/*----------tool-tip------------*/
+
+.tip {
+	color: #f03768;
+	cursor: help;
+	position: relative;
+	overflow: visible;
+	font-family: monospace;
+	font-size: 1.3em;
+}
+
+.tip:before, .tip:after {
+	position: absolute;
+	opacity: 0;
+	z-index: 9999
+	/*transform: translateY(-30%);*/
+	transition: .2s;
+}
+
+.tip:before {
+	content: '';
+	border-style: solid;
+	border-width: 0.8em 0.5em 0 0.5em;
+	border-color: #3E474F transparent transparent transparent;
+	transform: translateY(-200%);
+	bottom:90%;
+	left:50%;
+}
+
+.tip:after {
+	content: attr(data-tip);
+	background: #3E474F;
+	color: white;
+	width: 150px;
+	padding: 10px;
+	font-size: 0.8em;
+	bottom: 150%;
+	left: -50%;
+}
+
+.tip:hover:before, .tip:hover:after {
+	opacity: 1;
+	z-index: 9999
+	transform: scaleY(1);
+}
+
+
+
+
+/* Doxy pretty-printing styles. Used with prettify.js.  */
+
+pre .str, code .str { color: #fec243; font-style: italic; } /* string  - eggyolk gold */
+pre .kwd, code .kwd { color: #8470FF; } /* keyword - light slate blue */
+pre .com, code .com { color: #32cd32; font-style: italic; } /* comment - green */
+pre .typ, code .typ { color: #6ecbcc; } /* type - turq green */
+pre .lit, code .lit { color: #d06; } /* literal - cherry red */
+pre .pun, code .pun { color: #8B8970;  } /* punctuation - lemon chiffon4  */
+pre .pln, code .pln { color: #f0f0f0; } /* plaintext - white */
+pre .tag, code .tag { color: #9c9cff; } /* html/xml tag  (bluey)  */
+pre .htm, code .htm { color: #dda0dd; } /* html tag  light purply*/
+pre .xsl, code .xsl { color: #d0a0d0; } /* xslt tag  light purply*/
+pre .atn, code .atn { color: #46eeee; font-weight: normal;} /* html/xml attribute name  - lt turquoise */
+pre .atv, code .atv { color: #EEB4B4; } /* html/xml attribute value - rosy brown2 */
+pre .dec, code .dec { color: #3387CC; } /* decimal - blue */
+
+a {
+	text-decoration: none;
+}
+
+pre.prettyprint, code.prettyprint {
+	font-family: 'Space Mono', monospace;
+	font-size: 9pt;
+	/* no border */
+}
+
+pre.prettyprint {
+	border: none;
+	/*width: 95%;*/
+	/*margin: 1em auto;*/
+	/*padding: 1em;*/
+	/*white-space: pre-wrap;*/
+}
+
+pre.prettyprint a, code.prettyprint a {
+	text-decoration:none;
+	border : none;
+}
+
+/* Specify class=linenums on a pre to get line numbering; line numbers themselves are the same color as punctuation */
+/*ol.linenums { margin-top: 0; margin-bottom: 0; color: #8B8970; } /* IE indents via margin-left */*/
+/*li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8 { list-style-type: none }*/
+/*/* Alternate shading for lines */*/
+/*li.L1,li.L3,li.L5,li.L7,li.L9 { }*/
+
+/* print is mostly unchanged from default at present  */
+/*@media print {*/
+/*	pre.prettyprint, code.prettyprint { background-color: #fff;  }*/
+/*	pre .str, code .str { color: #088; }*/
+/*	pre .kwd, code .kwd { color: #006; font-weight: bold; }*/
+/*	pre .com, code .com { color: #0c3; font-style: italic; }*/
+/*	pre .typ, code .typ { color: #404; font-weight: bold; }*/
+/*	pre .lit, code .lit { color: #044; }*/
+/*	pre .pun, code .pun { color: #440; }*/
+/*	pre .pln, code .pln { color: #000; }*/
+/*	pre .tag, code .tag { color: #b66ff7; font-weight: bold; }*/
+/*	pre .htm, code .htm { color: #606; font-weight: bold; }*/
+/*	pre .xsl, code .xsl { color: #606; font-weight: bold; }*/
+/*	pre .atn, code .atn { color: #c71585;  font-weight: normal; }*/
+/*	pre .atv, code .atv { color: #088;  font-weight: normal; }*/
+/*}*/

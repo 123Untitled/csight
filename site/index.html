@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+
+		<!-- encoding -->
+		<meta charset="UTF-8">
+
+		<!-- favicon -->
+		<!--<link rel="icon" href="favicon.ico" type="image/x-icon">-->
+		<link rel="icon" type="image/png" href="favicon.png">
+
+		<!-- page title -->
+		<title>compile sight</title>
+
+		<!-- css file -->
+		<link rel="stylesheet" href="style.css">
+
+
+		<!-- script file -->
+		<!--<script type="module" src="issues.js"></script>-->
+		<!--<script src="app.js"></script>-->
+
+
+
+		<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">-->
+		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>-->
+
+		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>-->
+		<!--<script>hljs.highlightAll();</script>-->
+
+	</head>
+
+
+	<body>
+
+
+
+
+
+
+			<!--<div class="wrapper">-->
+			<!---->
+			<!--	<h1>compile sight</h1>-->
+			<!---->
+			<!--	<div class="wrap-1">-->
+			<!---->
+			<!--		<label><div>test/src/variant_tests.cpp</div></label>-->
+			<!--		<div class="content">note: in instantiation of function template specialization 'xns::get<3UL, X<char, {"C"}, {"char"}>, X<bool, {"B"}, {"bool"}>, X<double, {"D"}, {"double"}>>' requested here</div>-->
+			<!---->
+			<!--	</div>-->
+			<!---->
+			<!--	<div class="wrap-2">-->
+			<!---->
+			<!--		<label><div>tab two</div></label>-->
+			<!--		<div class="content">Lorem ipsum dolor sit amet...<span class="tip" data-tip="Lorem ipsum dolor sit amet.">deserunt</span></div>-->
+			<!---->
+			<!--	</div>-->
+			<!---->
+			<!--</div> -->
+
+
+			<div class=wrapper>
+				<h1>🔭 compile sight </h1>
+				<div id="container"></div>
+			</div>
+
+
+			<script>
+
+
+				const issues_data = {
+					"files": [
+						{
+							"filename": "./inc/containers/variant.hpp",
+							"errors": [
+								{
+									"line": 418,
+									"column": 65,
+									"message": " note: in instantiation of template type alias 'indexed_element' requested here"
+								},
+								{
+									"line": 430,
+									"column": 3,
+									"message": " error: static_assert failed due to requirement '3UL < sizeof...(T)' \"): VARIANT: INDEX OUT OF BOUNDS :(\""
+								},
+								{
+									"line": 433,
+									"column": 64,
+									"message": " note: in instantiation of template type alias 'type_at' requested here"
+								},
+							]
+						},
+						{
+							"filename": "./inc/indexed_element.hpp",
+							"errors": [
+								{
+									"line": 50,
+									"column": 22,
+									"message": " note: in instantiation of template type alias 'type_at' requested here"
+								},
+								{
+									"line": 56,
+									"column": 2,
+									"message": " note: in instantiation of template class 'xns::impl::indexed_element<3, xns::variant<X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>>' requested here"
+								},
+							]
+						},
+						{
+							"filename": "./inc/meta/type_at.hpp",
+							"errors": [
+								{
+									"line": 27,
+									"column": 4,
+									"message": " error: static_assert failed due to requirement '3UL < sizeof...(A)' \"TYPE_AT: INDEX OUT OF RANGE!\""
+								},
+								{
+									"line": 65,
+									"column": 2,
+									"message": " note: in instantiation of template class 'xns::impl::type_at<3, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
+								},
+								{
+									"line": 65,
+									"column": 2,
+									"message": " error: no type named 'type' in 'xns::impl::type_at<3, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>'"
+								},
+							]
+						},
+						{
+							"filename": "test/src/variant_tests.cpp",
+							"errors": [
+								{
+									"line": 85,
+									"column": 11,
+									"message": " note: while substituting deduced template arguments into function template 'get' [with I = 3, T = <X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>]"
+								},
+								{
+									"line": 85,
+									"column": 16,
+									"message": " note: in instantiation of function template specialization 'xns::get<3UL, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
+								},
+								{
+									"line": 85,
+									"column": 16,
+									"message": " note: in instantiation of function template specialization 'xns::get<3UL, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
+								},
+							]
+						},
+					]
+				}
+
+				// load local json data (test.json)
+				 fetch('test.json')
+
+
+				const container = document.getElementById('container');
+
+				issues_data.files.forEach(file => {
+
+					const wrap = document.createElement('div');
+					wrap.classList.add('wrap');
+
+					const label = document.createElement('label');
+					label.innerHTML = `<div>${file.filename}</div>`;
+					wrap.appendChild(label);
+
+					const content = document.createElement('div');
+					content.classList.add('content');
+					file.errors.forEach(error => {
+						// use google code prettify
+						//content.innerHTML += `<pre class="prettyprint" lang="cpp">${error.message}</pre>`;
+						content.innerHTML += `<div>${error.message}</div>`;
+					});
+					wrap.appendChild(content);
+
+					container.appendChild(wrap);
+
+				});
+
+				document.addEventListener("DOMContentLoaded", function() {
+
+					var   labels = document.querySelectorAll('.wrapper label');
+					var contents = document.querySelectorAll('.wrapper .content');
+
+					labels.forEach(function(label) {
+
+						label.addEventListener('mouseenter', function() {
+
+							// close all contents
+							contents.forEach(function(content) {
+								content.style.maxHeight = null;
+							});
+
+							// open the hovered content
+							var content = label.nextElementSibling;
+							if (content.style.maxHeight) {
+								content.style.maxHeight = null;
+							}
+							else {
+								content.style.maxHeight = content.scrollHeight + "px";
+							}
+
+						}); // label.addEventListener
+
+					}); // labels.forEach
+
+				}); // DOMContentLoaded
+			</script>
+
+
+
+	</body>
+</html>
+
+
+
+
+<!--app.js-->
+<!--import { issues_data } from './issues.js';-->
+<!---->
+<!--document.addEventListener('DOMContentLoaded', () => {-->
+<!--	const container = document.getElementById('container');-->
+<!--	issues_data.forEach(errors => {-->
+<!--		const fileDiv = document.createElement('div');-->
+<!--		fileDiv.innerHTML = `<h2>File: ${errors.file}</h2>`;-->
+<!--		errors.errors.forEach(error => {-->
+<!--			const errorDiv = document.createElement('div');-->
+<!--			errorDiv.innerHTML = `<strong>Line ${error.line}: Column ${error.column}</strong> - ${error.message}`;-->
+<!--			fileDiv.appendChild(errorDiv);-->
+<!--		});-->
+<!--		container.appendChild(fileDiv);-->
+<!--	});-->
+<!--});-->

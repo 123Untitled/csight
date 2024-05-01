@@ -1,0 +1,23 @@
+
+# -- I G N O R E D  F I L E S -------------------------------------------------
+
+# ignore executables
+/exec*
+
+# ignore object files
+/sources/**/*.o
+
+# ignore dependency files
+/sources/**/*.d
+
+# ignore clangd cache
+/.cache
+
+# ignore compile database
+/compile_commands.json
+
+# desktop service store (macos)
+/**/.DS_Store
+
+# neovim logs
+/.nvimlog
