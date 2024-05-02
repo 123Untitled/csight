@@ -166,11 +166,11 @@ auto cs::client::socket(cs::socket&& ___so) noexcept -> void {
 // -- public overriden methods ------------------------------------------------
 
 /* dispatch */
-auto cs::client::dispatch(const int ___evnts) -> void {
+auto cs::client::dispatch(const cs::ev_flag ___ev) -> void {
 
 	std::string buffer{};
 
-	//if (___evnts & EVFILT_READ) {
+	if (cs::ev_read(___ev)) {
 
 		std::cout << "\x1b[32mreading from client\x1b[0m" << std::endl;
 
@@ -178,10 +178,13 @@ auto cs::client::dispatch(const int ___evnts) -> void {
 
 		while (true) {
 
+			std::cout << "reading socket... " << _socket << std::endl;
 			const auto ret = ::recv(_socket, buff, sizeof(buff), 0);
 
-			if (ret == -1)
+			if (ret == -1) {
+				perror("recv");
 				throw cs::runtime_error{"failed to read from client"};
+			}
 
 			if (ret == 0) {
 				std::cout << "\x1b[31mclient disconnected\x1b[0m" << std::endl;
@@ -223,11 +226,15 @@ auto cs::client::dispatch(const int ___evnts) -> void {
 		//	std::string fav = generate_favicon_png();
 		//	::write(_socket, fav.c_str(), fav.size());
 		//}
-	//}
+	}
+	else if (cs::ev_write(___ev)) {
+		std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
+		serve_index();
+	}
 
-	//else {
-		//std::cout << "\x1b[31munknown event\x1b[0m" << std::endl;
-	//}
+	else {
+		std::cout << "\x1b[31munknown event\x1b[0m" << std::endl;
+	}
 
 	//if (count == 2) {
 	//	cs::shutdown(_socket, SHUT_RDWR);
