@@ -8,18 +8,16 @@
 
 #include "cs/containers/array.hpp"
 
+#define new_type(type1, type2) type1##type2
+
 
 #if ___cs_requirements
 int main(int ac, char** av) {
 
+	typedef new_type(int32, _t) my_int;
+
 	try {
 
-		constexpr cs::array<int, 10> arr{2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-
-		for (cs::size_t i = 0U; i < arr.size(); ++i)
-			std::cout << arr._data[i] << std::endl;
-
-		return 0;
 
 		//auto ___lst = cs::parser::parse(STDIN_FILENO);
 
