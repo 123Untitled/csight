@@ -72,7 +72,7 @@ namespace cs {
 			// -- public overriden methods ------------------------------------
 
 			/* dispatch */
-			auto dispatch(const int) -> void override;
+			auto dispatch(const cs::ev_flag) -> void override;
 
 			/* descriptor */
 			auto descriptor(void) const noexcept -> int override;
