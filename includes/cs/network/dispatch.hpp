@@ -27,16 +27,24 @@ namespace cs {
 	// -- non-member constants ------------------------------------------------
 
 	#if defined(___cs_os_macos)
+
+	/* event flag type */
+	using ev_flag = int;
+
 	/* dispatch event */
-	enum dispatch_event : int {
+	enum dispatch_event : cs::ev_flag {
 		EV_READ  = EVFILT_READ,
 		EV_WRITE = EVFILT_WRITE,
 		EV_ERROR = EVFILT_ERROR
 	};
 
 	#elif defined(___cs_os_linux)
+
+	/* event flag type */
+	using ev_flag = ::uint32_t;
+
 	/* dispatch event */
-	enum dispatch_event : ::uint32_t {
+	enum dispatch_event : cs::ev_flag {
 		EV_READ  = EPOLLIN,
 		EV_WRITE = EPOLLOUT,
 		EV_ERROR = EPOLLERR
@@ -60,17 +68,9 @@ namespace cs {
 			#if defined(___cs_os_macos)
 			using ___event = struct ::kevent;
 
-			/* event flags */
-			using ___ev_flag = int;
-
-
 			/* event type */
 			#elif defined(___cs_os_linux)
 			using ___event = struct ::epoll_event;
-
-			/* event flags */
-			using ___ev_flag = ::uint32_t;
-
 			#endif
 
 			/* size type */
@@ -88,7 +88,7 @@ namespace cs {
 			/* is event */
 			#if defined(___cs_os_macos)
 
-			enum : int {
+			enum : cs::ev_flag {
 				EV_MASK = ~EVFILT_READ
 						| ~EVFILT_WRITE
 						| ~EVFILT_AIO
@@ -135,14 +135,14 @@ namespace cs {
 			// 18  0000000000010010
 
 
-			template <___ev_flag ___ev>
+			template <cs::ev_flag ___ev>
 			static constexpr bool is_event = (~___ev & EV_MASK) == 0;
 
 			#elif defined(___cs_os_linux)
 
 
 			/* is epoll event */
-			template <___ev_flag ___ev>
+			template <cs::ev_flag ___ev>
 			static constexpr bool is_event = (___ev & ~(EPOLLIN
 													  | EPOLLOUT
 													  | EPOLLRDHUP
@@ -217,50 +217,31 @@ namespace cs {
 			// -- public methods ----------------------------------------------
 
 			/* wait */
-			#if defined(___cs_os_macos)
 			auto wait(void) -> void {
 
-				// compute timeout
-				constexpr struct ::timespec timeout {
-					.tv_sec  =  DISPATCH_TIMEOUT / 1'000U,
-					.tv_nsec = (DISPATCH_TIMEOUT % 1'000U) * 1'000'000U
-				};
-
 				// wait for events
-				const auto ret = ::kevent(_handle, nullptr, 0, _events.data(), static_cast<int>(_events.size()), &timeout);
-
-				// check for error
-				if (ret == -1)
-					throw cs::runtime_error{"failed to wait for events"};
+				const auto nev = _wait();
 
 				// process events
-				for (___size i = 0U; i < static_cast<___size>(ret); ++i) {
-
-					// get event
-					const auto& ___ev = _events[i];
-
-					// send event type
-					reinterpret_cast<observer*>(___ev.udata)->dispatch(___ev.filter);
+				for (___size i = 0U; i < nev; ++i) {
+					// get event flag
+					const cs::ev_flag ev = _event(_events[i]);
+					// get observer
+					observer& ob = _data(_events[i]);
+					// dispatch event
+					ob.dispatch(ev);
 				}
 
 				// resize events
-				if (static_cast<___size>(ret) == _events.size())
+				if (nev == _events.size())
 					_events.resize(_events.size() * 2U);
-
 			}
-
-			#elif defined(___cs_os_linux)
-			auto wait(void) -> void {
-
-				std::cout << "linux dispatch is not implemented" << std::endl;
-			}
-			#endif
 
 
 			// -- public modifiers --------------------------------------------
 
 			/* add */
-			template <___ev_flag ___evs>
+			template <cs::ev_flag ___evs>
 			static auto add(const ___self& ___disp, observer& ___obs) -> void {
 
 				// check for valid event
@@ -289,7 +270,8 @@ namespace cs {
 				// create event
 				struct epoll_event event {
 					.events = ___evs,
-					.data   = {reinterpret_cast<void*>(___obs.descriptor())}
+					.data = {
+						.ptr = &___obs }
 				};
 
 				// add event
@@ -338,29 +320,88 @@ namespace cs {
 				#endif
 			}
 
+
+		private:
+
+			// -- private methods ---------------------------------------------
+
+			/* data */
+			static auto _data(___event& ___ev) -> observer& {
+				#if defined(___cs_os_macos)
+				return *reinterpret_cast<observer*>(___ev.udata);
+				#elif defined(___cs_os_linux)
+				return *reinterpret_cast<observer*>(___ev.data.ptr);
+				#endif
+			}
+
+			/* event */
+			static auto _event(___event& ___ev) -> cs::ev_flag {
+				#if defined(___cs_os_macos)
+				return ___ev.filter;
+				#elif defined(___cs_os_linux)
+				return ___ev.events;
+				#endif
+			}
+
+
+			/* wait */
+			auto _wait(void) -> ___size {
+
+				// -- macos ---------------------------------------------------
+
+				#if defined(___cs_os_macos)
+				// compute timeout
+				constexpr struct ::timespec timeout {
+					.tv_sec  =  DISPATCH_TIMEOUT / 1'000U,
+					.tv_nsec = (DISPATCH_TIMEOUT % 1'000U) * 1'000'000U
+				};
+				// wait for events
+				const auto ret = ::kevent(_handle, nullptr, 0, _events.data(),
+																static_cast<int>(_events.size()),
+																&timeout);
+
+
+				// -- linux ---------------------------------------------------
+
+				#elif defined(___cs_os_linux)
+				// wait for events
+				const auto ret = ::epoll_wait(_handle, _events.data(),
+														static_cast<int>(_events.size()),
+														DISPATCH_TIMEOUT);
+				// see epoll_pwait
+				#endif
+
+
+				// -- common --------------------------------------------------
+
+				// check for error
+				if (ret < 0)
+					throw cs::runtime_error{"failed to wait for events"};
+
+				return static_cast<___size>(ret);
+			}
+
 	}; // class dispatch
 
 
 
 	// -- non-member functions ------------------------------------------------
 
-	inline auto is_read_event(const int ___evnts) noexcept -> bool {
+	inline auto ev_read(const cs::ev_flag ___ev) noexcept -> bool {
 
 		#if defined(___cs_os_macos)
-		return ___evnts & EVFILT_READ ? true : false;
+		return ___ev & EVFILT_READ ? true : false;
 		#elif defined(___cs_os_linux)
-		return true;
-		//return ___evnts & EPOLLIN ? true : false;
+		return ___ev & EPOLLIN ? true : false;
 		#endif
 	}
 
-	inline auto is_write_event(const int ___evnts) noexcept -> bool {
+	inline auto ev_write(const cs::ev_flag ___ev) noexcept -> bool {
 
 		#if defined(___cs_os_macos)
-		return ___evnts & EVFILT_WRITE ? true : false;
+		return ___ev & EVFILT_WRITE ? true : false;
 		#elif defined(___cs_os_linux)
-		return true;
-		//return ___evnts & EPOLLOUT ? true : false;
+		return ___ev & EPOLLOUT ? true : false;
 		#endif
 	}
 
