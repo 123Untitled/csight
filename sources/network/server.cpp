@@ -70,14 +70,14 @@ auto cs::server::run(void) -> void {
 
 
 // -- public overriden methods ------------------------------------------------
-		//std::cout << "\x1b[32maccepting client\x1b[0m" << std::endl;
 
 /* dispatch */
-auto cs::server::dispatch(const int ___evnts) -> void {
+auto cs::server::dispatch(const cs::ev_flag ___ev) -> void {
 
 
-	if (cs::is_read_event(___evnts)) {
+	if (cs::ev_read(___ev)) {
 
+		std::cout << "\x1b[32mserver accepting client\x1b[0m" << std::endl;
 
 		// address
 		cs::address addr;
@@ -92,6 +92,8 @@ auto cs::server::dispatch(const int ___evnts) -> void {
 			return;
 		}
 
+		std::cout << "new client: " << ___cli << std::endl;
+
 		// non-blocking
 		cs::non_blocking(___cli);
 
@@ -100,9 +102,8 @@ auto cs::server::dispatch(const int ___evnts) -> void {
 
 		// add to dispatcher
 		___dispatch::add<cs::dispatch_event::EV_READ
-					   | cs::dispatch_event::EV_WRITE
+					   //| cs::dispatch_event::EV_WRITE
 			>(_dispatch, _client);
-
 	}
 }
 
