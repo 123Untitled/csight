@@ -1,10 +1,12 @@
-#ifndef CS_SOCKET_HEADER
-#define CS_SOCKET_HEADER
+#ifndef ___CS_SOCKET_HPP___
+#define ___CS_SOCKET_HPP___
 
 
 #include "cs/config.hpp"
 
 #if ___cs_requirements
+
+#include "cs/network/address.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -24,9 +26,12 @@ namespace cs {
 
 		// -- friends ---------------------------------------------------------
 
-		/* socket as friend */
+		/* make_socket as friend */
 		template <int, int, int>
 		friend auto make_socket(void) -> cs::socket;
+
+		/* accept as friend */
+		friend auto accept(const cs::socket&, cs::address&) -> cs::socket;
 
 
 		private:
@@ -37,15 +42,15 @@ namespace cs {
 			using ___self = cs::socket;
 
 
-			// -- private constants -------------------------------------------
+		public:
+
+			// -- public constants --------------------------------------------
 
 			/* invalid socket */
 			enum : int {
 				INVALID_SOCKET = -1
 			};
 
-
-		public:
 
 			// -- public lifecycle --------------------------------------------
 
@@ -126,6 +131,28 @@ namespace cs {
 
 	// -- non-member functions ------------------------------------------------
 
+	/* bind */
+	auto bind(const cs::socket&, const cs::address&) -> void;
+
+	/* listen */
+	auto listen(const cs::socket&, const int = SOMAXCONN) -> void;
+
+	/* accept */
+	auto accept(const cs::socket&, cs::address&) -> cs::socket;
+
+	/* non-blocking */
+	auto non_blocking(const cs::socket&) -> void;
+
+	/* blocking */
+	auto blocking(const cs::socket&) -> void;
+
+	/* shutdown */
+	auto shutdown(const cs::socket&, const int) -> void;
+
+	/* reuse address */
+	auto reuse_address(const cs::socket&) -> void;
+
+
 	/* socket */
 	template <int ___domain, int ___type = SOCK_STREAM, int ___protocol = 0>
 	auto make_socket(void) -> cs::socket {
@@ -140,4 +167,4 @@ namespace cs {
 
 #endif // ___cs_requirements
 
-#endif // CS_SOCKET_HEADER
+#endif // ___CS_SOCKET_HPP___

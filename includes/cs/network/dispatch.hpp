@@ -16,6 +16,7 @@
 #	include <sys/epoll.h>
 #endif
 
+#include <iostream>
 
 // -- C S  N A M E S P A C E --------------------------------------------------
 
@@ -217,14 +218,14 @@ namespace cs {
 			#if defined(___cs_os_macos)
 			/* add */
 			template <int ___events>
-			static auto add(const ___self& ___disp, observer& ___obs, const cs::descriptor& ___desc) -> void {
+			static auto add(const ___self& ___disp, observer& ___obs) -> void {
 
 				// check for valid event
 				static_assert(___self::is_event<___events>, "dispatch: event not supported");
 
 				// create event
 				struct kevent event {
-					.ident  = static_cast<uintptr_t>(___desc.handle()),
+					.ident  = static_cast<uintptr_t>(___obs.descriptor()),
 					.filter = EVFILT_READ | EVFILT_WRITE,
 					.flags  = EV_ADD,
 					.fflags = 0U,
@@ -240,21 +241,25 @@ namespace cs {
 			}
 
 			/* remove */
-			static auto remove(const ___self& ___disp, const cs::descriptor& ___desc) -> void {
+			static auto remove(const ___self& ___disp, observer& ___obs) -> void {
 
 				// create event
 				struct kevent event {
-					.ident  = static_cast<uintptr_t>(___desc.handle()),
+					.ident  = static_cast<uintptr_t>(___obs.descriptor()),
 					.filter = EVFILT_READ,
 					.flags  = EV_DELETE,
 					.fflags = 0U,
 					.data   = 0,
-					.udata  = nullptr
+					.udata  = &___obs
 				};
 
+				std::cout << "removing descriptor from kqueue: " << ___obs.descriptor() << std::endl;
+
 				// remove event
-				if (::kevent(___disp._handle, &event, 1, nullptr, 0, nullptr) == -1)
+				if (::kevent(___disp._handle, &event, 1, nullptr, 0, nullptr) == -1) {
+					perror("kevent");
 					throw cs::runtime_error{"failed to remove descriptor from kqueue"};
+				}
 			}
 
 

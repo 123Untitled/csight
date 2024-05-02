@@ -8,7 +8,7 @@
 
 #include <fstream>
 #include <map>
-#include <vector>
+//#include <vector>
 
 
 #if ___cs_requirements
@@ -17,6 +17,10 @@
 // -- C S  N A M E S P A C E --------------------------------------------------
 
 namespace cs {
+
+
+
+
 
 
 	// -- H T M L -------------------------------------------------------------
@@ -70,9 +74,7 @@ namespace cs {
 	/* to json string */
 	inline auto to_json(const std::string& str) -> std::string {
 
-		// this fonction transforms a string into a json string
-		// for example: "hello" -> "\"hello\""
-		//              "hello\nworld" -> "\"hello\\nworld\""
+		// this function escapes special characters in a string to make it a valid JSON string
 
 		std::string result;
 
@@ -107,50 +109,89 @@ namespace cs {
 
 
 
-	inline auto generate_js(cs::list<cs::issue> ___lst) -> void {
+	inline auto generate_js(cs::list<cs::issue> ___lst) -> std::string {
 
-		// Group errors by file
-		std::map<std::string, cs::list<cs::issue>> ___map;
+
+		std::string result;
+		result.reserve(1024);
+
+		result += "[\n";
 
 		for (const auto& error : ___lst) {
-			std::string path{error.path().data(), error.path().size()};
-			___map[path].push_back(error);
+			result += "{\n";
+			// add file name
+			result += "\t\"fileName\": " + to_json(std::string{error.path().data(), error.path().size()}) + ",\n";
+
+			result += "\t\"line\": " + std::to_string(error.line()) + ",\n";
+			result += "\t\"column\": " + std::to_string(error.column()) + ",\n";
+
+			std::string message{error.message().data(), error.message().size()};
+
+			result += "\t\"message\": " + to_json(message) + "\n";
+			result += "},\n";
 		}
+
+		// remove last comma
+		result.pop_back();
+		result.pop_back();
+
+		result += "\n";
+
+		result += "]\n";
+
+		std::cout << result << std::endl;
+
+		// write to file
+		std::ofstream file("issues2.js");
+
+		file << result;
+		file.close();
+
+		return result;
+
+
+		// Group errors by file
+		//std::map<std::string, cs::list<cs::issue>> ___map;
+		//
+		//for (const auto& error : ___lst) {
+		//	std::string path{error.path().data(), error.path().size()};
+		//	___map[path].push_back(error);
+		//}
 
 
 		//std::ofstream file("issues.js");
-		std::ofstream file("issues.json");
+		//std::ofstream file("issues.json");
 
 		//file << "const errors = ";
-
-		file << "{\n";
-		file << "\"files\": [\n";
-
-
-		for (const auto& f : ___map) {
-			file << "{\n";
-			file << "\"filename\": " << to_json(f.first) << ",\n";
-			file << "\"errors\": [\n";
-
-			for (const auto& error : f.second) {
-				file << "{\n";
-				file << "\"line\": " << error.line() << ",\n";
-				file << "\"column\": " << error.column() << ",\n";
-
-				std::string message{error.message().data(), error.message().size()};
-
-				file << "\"message\": " << to_json(message) << "\n";
-				file << "},\n";
-			}
-
-			file << "]\n";
-			file << "},\n";
-		}
-
-		file << "]\n";
-		file << "}\n";
-
-		file.close();
+		//
+		//file << "{\n";
+		//file << "\"files\": [\n";
+		//
+		//
+		//for (const auto& f : ___map) {
+		//	file << "{\n";
+		//	file << "\"filename\": " << to_json(f.first) << ",\n";
+		//	file << "\"errors\": [\n";
+		//
+		//	for (const auto& error : f.second) {
+		//		file << "{\n";
+		//		file << "\"line\": " << error.line() << ",\n";
+		//		file << "\"column\": " << error.column() << ",\n";
+		//
+		//		std::string message{error.message().data(), error.message().size()};
+		//
+		//		file << "\"message\": " << to_json(message) << "\n";
+		//		file << "},\n";
+		//	}
+		//
+		//	file << "]\n";
+		//	file << "},\n";
+		//}
+		//
+		//file << "]\n";
+		//file << "}\n";
+		//
+		//file.close();
 
 
 

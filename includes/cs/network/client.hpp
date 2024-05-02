@@ -1,23 +1,23 @@
-#ifndef ___CS_SERVER_HPP___
-#define ___CS_SERVER_HPP___
+#ifndef ___CS_CLIENT_HPP___
+#define ___CS_CLIENT_HPP___
 
 #include "cs/config.hpp"
 #if ___cs_requirements
 
-#include "cs/io_event.hpp"
-#include "cs/network/client.hpp"
 #include "cs/network/socket.hpp"
-#include "cs/network/dispatch.hpp"
+#include "cs/io_event.hpp"
 
+
+#include <string>
 
 // -- C S  N A M E S P A C E --------------------------------------------------
 
 namespace cs {
 
 
-	// -- S E R V E R ---------------------------------------------------------
+	// -- C L I E N T ---------------------------------------------------------
 
-	class server final : public cs::io_event {
+	class client final : public cs::io_event {
 
 
 		private:
@@ -25,28 +25,13 @@ namespace cs {
 			// -- private types -----------------------------------------------
 
 			/* self type */
-			using ___self = cs::server;
-
-			/* dispatch type */
-			using ___dispatch = cs::dispatch<cs::io_event>;
+			using ___self = cs::client;
 
 
 			// -- private members ---------------------------------------------
 
-			/* running */
-			bool _running;
-
-			/* port */
-			::in_port_t _port;
-
 			/* socket */
 			cs::socket _socket;
-
-			/* client */
-			cs::client _client;
-
-			/* dispatch */
-			___dispatch _dispatch;
 
 
 		public:
@@ -54,19 +39,19 @@ namespace cs {
 			// -- public lifecycle --------------------------------------------
 
 			/* default constructor */
-			server(void);
+			client(void) noexcept = default;
 
-			/* port constructor */
-			server(const ::in_port_t);
+			/* socket constructor */
+			client(cs::socket&&) noexcept;
 
 			/* deleted copy constructor */
-			server(const ___self&) = delete;
+			client(const ___self&) = delete;
 
 			/* move constructor */
-			server(___self&&) noexcept = default;
+			client(___self&&) noexcept = default;
 
 			/* destructor */
-			~server(void) noexcept = default;
+			~client(void) noexcept = default;
 
 
 			// -- public assignment operators ---------------------------------
@@ -78,6 +63,12 @@ namespace cs {
 			auto operator=(___self&&) noexcept -> ___self& = default;
 
 
+			// -- public modifiers --------------------------------------------
+
+			/* socket */
+			auto socket(cs::socket&&) noexcept -> void;
+
+
 			// -- public overriden methods ------------------------------------
 
 			/* dispatch */
@@ -87,18 +78,21 @@ namespace cs {
 			auto descriptor(void) const noexcept -> int override;
 
 
-			// -- public methods ----------------------------------------------
 
-			/* run */
-			auto run(void) -> void;
+		private:
 
-			/* stop */
-			auto stop(void) -> void;
+			// -- private methods ---------------------------------------------
 
-	}; // class server
+			/* serve file */
+			auto serve_file(const std::string&,
+					        const std::string&) -> void;
+
+			auto serve_index(void) -> void;
+
+	}; // class client
 
 } // namespace cs
 
 #endif // ___cs_requirements
 
-#endif // ___CS_SERVER_HPP___
+#endif // ___CS_CLIENT_HPP___
