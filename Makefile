@@ -14,10 +14,10 @@
 .DELETE_ON_ERROR:
 
 # set shell program
-override SHELL := $(shell which sh)
+override SHELL := $(shell which zsh)
 
 # shell flags
-override .SHELLFLAGS := -c
+.SHELLFLAGS := -d -f -c -e -o pipefail -u
 
 
 # -- O P E R A T I N G  S Y S T E M -------------------------------------------
@@ -58,6 +58,9 @@ override COMPILE_DB := compile_commands.json
 
 # -- D I R E C T O R I E S ----------------------------------------------------
 
+# root directory
+override ROOT_DIR := $(shell pwd)
+
 # source directory
 override SRC_DIR := sources
 
@@ -69,6 +72,9 @@ override INC_DIR := includes
 
 # source files
 override SRCS := $(shell find $(SRC_DIR) -type f -name '*.cpp')
+
+# number of source files
+override NSRCS := $(words $(SRCS))
 
 # object files
 override OBJS := $(SRCS:%.cpp=%.o)
@@ -122,10 +128,13 @@ override DEPFLAGS = -MT $@ -MMD -MP -MF $*.d
 # phony targets
 .PHONY: all clean fclean re rm
 
+# not parallel
+.NOTPARALLEL: $(COMPILE_DB)
+
 
 # -- T A R G E T S ------------------------------------------------------------
 
-all: $(EXEC) .WAIT $(COMPILE_DB)
+all: $(EXEC) $(COMPILE_DB)
 	echo '[done]'
 
 $(EXEC): $(OBJS)
@@ -150,7 +159,6 @@ fclean: clean
 re: fclean all
 
 rm: fclean
-
 
 
 # generate compile_commands.json
