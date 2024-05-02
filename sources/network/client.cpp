@@ -170,7 +170,7 @@ auto cs::client::dispatch(const int ___evnts) -> void {
 
 	std::string buffer{};
 
-	if (___evnts & EVFILT_READ) {
+	//if (___evnts & EVFILT_READ) {
 
 		std::cout << "\x1b[32mreading from client\x1b[0m" << std::endl;
 
@@ -223,11 +223,11 @@ auto cs::client::dispatch(const int ___evnts) -> void {
 		//	std::string fav = generate_favicon_png();
 		//	::write(_socket, fav.c_str(), fav.size());
 		//}
-	}
+	//}
 
-	else {
-		std::cout << "\x1b[31munknown event\x1b[0m" << std::endl;
-	}
+	//else {
+		//std::cout << "\x1b[31munknown event\x1b[0m" << std::endl;
+	//}
 
 	//if (count == 2) {
 	//	cs::shutdown(_socket, SHUT_RDWR);
