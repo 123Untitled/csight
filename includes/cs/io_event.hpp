@@ -5,6 +5,7 @@
 #if ___cs_requirements
 
 #include "cs/containers/vector.hpp"
+#include "cs/network/dispatch.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -81,7 +82,7 @@ namespace cs {
 			// -- public interface --------------------------------------------
 
 			/* dispatch */
-			virtual auto dispatch(const int) -> void = 0;
+			virtual auto dispatch(const cs::ev_flag) -> void = 0;
 
 			/* descriptor */
 			virtual auto descriptor(void) const noexcept -> int = 0;
