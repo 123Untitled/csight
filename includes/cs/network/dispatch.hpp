@@ -18,9 +18,30 @@
 
 #include <iostream>
 
+
 // -- C S  N A M E S P A C E --------------------------------------------------
 
 namespace cs {
+
+
+	// -- non-member constants ------------------------------------------------
+
+	#if defined(___cs_os_macos)
+	/* dispatch event */
+	enum dispatch_event : int {
+		EV_READ  = EVFILT_READ,
+		EV_WRITE = EVFILT_WRITE,
+		EV_ERROR = EVFILT_ERROR
+	};
+
+	#elif defined(___cs_os_linux)
+	/* dispatch event */
+	enum dispatch_event : ::uint32_t {
+		EV_READ  = EPOLLIN,
+		EV_WRITE = EPOLLOUT,
+		EV_ERROR = EPOLLERR
+	};
+	#endif
 
 
 	// -- D I S P A T C H -----------------------------------------------------
@@ -39,9 +60,16 @@ namespace cs {
 			#if defined(___cs_os_macos)
 			using ___event = struct ::kevent;
 
+			/* event flags */
+			using ___ev_flag = int;
+
+
 			/* event type */
 			#elif defined(___cs_os_linux)
 			using ___event = struct ::epoll_event;
+
+			/* event flags */
+			using ___ev_flag = ::uint32_t;
 
 			#endif
 
@@ -107,9 +135,25 @@ namespace cs {
 			// 18  0000000000010010
 
 
-			template <int ___events>
-			static constexpr bool is_event = (~___events & EV_MASK) == 0;
+			template <___ev_flag ___ev>
+			static constexpr bool is_event = (~___ev & EV_MASK) == 0;
+
+			#elif defined(___cs_os_linux)
+
+
+			/* is epoll event */
+			template <___ev_flag ___ev>
+			static constexpr bool is_event = (___ev & ~(EPOLLIN
+													  | EPOLLOUT
+													  | EPOLLRDHUP
+													  | EPOLLPRI
+													  | EPOLLERR
+													  | EPOLLHUP
+													  | EPOLLET
+													  | EPOLLONESHOT)) == 0;
+
 			#endif
+
 
 		private:
 
@@ -215,18 +259,19 @@ namespace cs {
 
 			// -- public modifiers --------------------------------------------
 
-			#if defined(___cs_os_macos)
 			/* add */
-			template <int ___events>
+			template <___ev_flag ___evs>
 			static auto add(const ___self& ___disp, observer& ___obs) -> void {
 
 				// check for valid event
-				static_assert(___self::is_event<___events>, "dispatch: event not supported");
+				static_assert(___self::is_event<___evs>, "dispatch: event not supported");
+
+				#if defined(___cs_os_macos)
 
 				// create event
 				struct kevent event {
 					.ident  = static_cast<uintptr_t>(___obs.descriptor()),
-					.filter = EVFILT_READ | EVFILT_WRITE,
+					.filter = ___evs,
 					.flags  = EV_ADD,
 					.fflags = 0U,
 					.data   = 0,
@@ -238,10 +283,27 @@ namespace cs {
 				// add event
 				if (::kevent(___disp._handle, &event, 1, nullptr, 0, nullptr) != 0)
 					throw cs::runtime_error{"failed to add descriptor to kqueue"};
+
+				#elif defined(___cs_os_linux)
+
+				// create event
+				struct epoll_event event {
+					.events = ___evs,
+					.data   = {reinterpret_cast<void*>(___obs.descriptor())}
+				};
+
+				// add event
+				if (::epoll_ctl(___disp._handle, EPOLL_CTL_ADD, ___obs.descriptor(), &event) == -1)
+					throw cs::runtime_error{"failed to add descriptor to epoll"};
+
+				#endif
 			}
+
 
 			/* remove */
 			static auto remove(const ___self& ___disp, observer& ___obs) -> void {
+
+				#if defined(___cs_os_macos)
 
 				// create event
 				struct kevent event {
@@ -260,27 +322,25 @@ namespace cs {
 					perror("kevent");
 					throw cs::runtime_error{"failed to remove descriptor from kqueue"};
 				}
+
+				#elif defined(___cs_os_linux)
+
+				// create event
+				struct epoll_event event {
+					.events = 0,
+					.data   = {reinterpret_cast<void*>(___obs.descriptor())}
+				};
+
+				// remove event
+				if (::epoll_ctl(___disp._handle, EPOLL_CTL_DEL, ___obs.descriptor(), &event) == -1)
+					throw cs::runtime_error{"failed to remove descriptor from epoll"};
+
+				#endif
 			}
-
-
-			#elif defined (___cs_os_linux)
-			/* add */
-
-			#endif
-
-
 
 	}; // class dispatch
 
 
-	// -- non-member constants ------------------------------------------------
-
-	/* event types */
-	//enum : int {
-	//	EV_DISPATCH_READ  = 0x01,
-	//	EV_DISPATCH_WRITE = 0x02,
-	//	EV_DISPATCH_ERROR = 0x04
-	//};
 
 	// -- non-member functions ------------------------------------------------
 
@@ -289,7 +349,8 @@ namespace cs {
 		#if defined(___cs_os_macos)
 		return ___evnts & EVFILT_READ ? true : false;
 		#elif defined(___cs_os_linux)
-		return ___evnts & EPOLLIN ? true : false;
+		return true;
+		//return ___evnts & EPOLLIN ? true : false;
 		#endif
 	}
 
@@ -298,7 +359,8 @@ namespace cs {
 		#if defined(___cs_os_macos)
 		return ___evnts & EVFILT_WRITE ? true : false;
 		#elif defined(___cs_os_linux)
-		return ___evnts & EPOLLOUT ? true : false;
+		return true;
+		//return ___evnts & EPOLLOUT ? true : false;
 		#endif
 	}
 
