@@ -4,6 +4,7 @@
 #include "cs/html.hpp"
 #include "cs/network/server.hpp"
 
+#include "cs/network/select.hpp"
 
 
 #include "cs/containers/array.hpp"
@@ -17,6 +18,10 @@ int main(int ac, char** av) {
 	typedef new_type(int32, _t) my_int;
 
 	try {
+
+		test::select s;
+
+		s.wait();
 
 
 		//auto ___lst = cs::parser::parse(STDIN_FILENO);
