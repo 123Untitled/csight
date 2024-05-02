@@ -11,73 +11,10 @@
 
 #include "cs/network/dispatch.hpp"
 #include "cs/network/address.hpp"
+#include "cs/browser.hpp"
 
 
-// get environ
-extern char** environ;
 
-
-auto open_browser(const ::in_port_t ___port) -> void {
-
-
-	// search path in env PATH
-
-	// fork
-	::pid_t pid = ::fork();
-
-	if (pid == -1) {
-		perror("fork");
-		throw cs::runtime_error{"failed to fork"};
-	}
-
-	// child
-	if (pid == 0) {
-
-		// 16-bit max digits (5)
-		char ___url[] {
-			'h', 't', 't', 'p', ':', '/', '/',
-			'l', 'o', 'c', 'a', 'l', 'h', 'o', 's', 't', ':',
-			static_cast<char>((___port / 10000)     + '0'),
-			static_cast<char>((___port / 1000) % 10 + '0'),
-			static_cast<char>((___port / 100)  % 10 + '0'),
-			static_cast<char>((___port / 10)   % 10 + '0'),
-			static_cast<char>((___port % 10)        + '0'),
-			'\0'
-		};
-
-		char ___cmd[] = "/usr/bin/open";
-
-		char* ___args[] = {___cmd, ___url, nullptr};
-
-		if (::execl(___cmd, ___cmd, ___url, nullptr) == -1)
-			perror("execvp");
-		exit(EXIT_FAILURE);
-	}
-
-	// parent
-	else {
-
-		// wait for child
-		int status;
-		if (::waitpid(pid, &status, 0) == -1)
-			perror("waitpid");
-
-		if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status) != 0) {
-				std::cerr << "failed to open browser" << std::endl;
-				throw cs::runtime_error{"failed to open browser"};
-			}
-			else {
-				std::cout << "browser opened" << std::endl;
-			}
-		}
-		else {
-			std::cerr << "failed to open browser" << std::endl;
-			throw cs::runtime_error{"failed to open browser"};
-		}
-
-	}
-}
 
 
 // -- public lifecycle --------------------------------------------------------
@@ -107,7 +44,7 @@ cs::server::server(const ::in_port_t ___port)
 	cs::listen(_socket, 1);
 
 	// add server to dispatcher
-	___dispatch::add<EVFILT_READ>(_dispatch, *this);
+	___dispatch::add<cs::dispatch_event::EV_READ>(_dispatch, *this);
 }
 
 
@@ -162,8 +99,8 @@ auto cs::server::dispatch(const int ___evnts) -> void {
 		_client.socket(cs::move(___cli));
 
 		// add to dispatcher
-		___dispatch::add<EVFILT_READ | EVFILT_WRITE
-			| EVFILT_EXCEPT
+		___dispatch::add<cs::dispatch_event::EV_READ
+					   | cs::dispatch_event::EV_WRITE
 			>(_dispatch, _client);
 
 	}
