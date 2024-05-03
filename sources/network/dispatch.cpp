@@ -1,5 +1,7 @@
 #include "cs/network/dispatch.hpp"
 #include "cs/diagnostics/exception.hpp"
+#include "cs/type_traits/move.hpp"
+#include <unistd.h>
 
 #include <iostream>
 
@@ -16,6 +18,16 @@ auto cs::dispatch::remove(cs::io_event& ___obs) -> void {
 	___self::_shared()._remove(___obs);
 }
 
+/* run */
+auto cs::dispatch::run(void) -> void {
+	___self::_shared()._run();
+}
+
+/* stop */
+auto cs::dispatch::stop(void) -> void {
+	___self::_shared()._running = false;
+}
+
 
 
 // -- private lifecycle -------------------------------------------------------
@@ -27,7 +39,7 @@ cs::dispatch::dispatch(void)
 #elif defined(___cs_os_linux)
 : _handle{::epoll_create1(0)},
 #endif
-  _events{} {
+  _events{}, _map{}, _running{true} {
 
 	// check for error
 	if (not _handle)
@@ -71,6 +83,26 @@ auto cs::dispatch::_event(___event& ___ev) noexcept -> cs::ev_flag {
 }
 
 
+// -- non-member functions ------------------------------------------------
+
+static auto ev_read(const cs::ev_flag ___ev) noexcept -> bool {
+
+	#if defined(___cs_os_macos)
+	return ___ev & EVFILT_READ ? true : false;
+	#elif defined(___cs_os_linux)
+	return ___ev & EPOLLIN ? true : false;
+	#endif
+}
+
+static auto ev_write(const cs::ev_flag ___ev) noexcept -> bool {
+
+	#if defined(___cs_os_macos)
+	return ___ev & EVFILT_WRITE ? true : false;
+	#elif defined(___cs_os_linux)
+	return ___ev & EPOLLOUT ? true : false;
+	#endif
+}
+
 // -- private methods ---------------------------------------------------------
 
 
@@ -80,14 +112,28 @@ auto cs::dispatch::_poll(void) -> void {
 	// wait for events
 	const auto nev = _wait();
 
+	if (nev == 0)
+		return;
+
+	::write(STDOUT_FILENO, "\n", 1U);
+
 	// process events
-	for (___size i = 0U; i < nev; ++i) {
+	for (size_type i = 0U; i < nev; ++i) {
+
 		// get event flag
 		const cs::ev_flag ev = _event(_events[i]);
 		// get observer
-		cs::io_event& ob = _data(_events[i]);
-		// dispatch event
-		ob.dispatch(ev);
+		cs::io_event& ___io = _data(_events[i]);
+
+		// check event
+		if (ev_read(ev))
+			___io.read();
+
+		else if (ev_write(ev))
+			___io.send();
+
+		else
+			throw cs::runtime_error{"unknown event"};
 	}
 
 	// resize events
@@ -96,7 +142,7 @@ auto cs::dispatch::_poll(void) -> void {
 }
 
 /* wait */
-auto cs::dispatch::_wait(void) -> ___size {
+auto cs::dispatch::_wait(void) -> size_type {
 
 	// -- macos ---------------------------------------------------------------
 
@@ -129,11 +175,16 @@ auto cs::dispatch::_wait(void) -> ___size {
 	if (ret < 0)
 		throw cs::runtime_error{"failed to wait for events"};
 
-	return static_cast<___size>(ret);
+	return static_cast<size_type>(ret);
 }
 
 /* add */
-auto cs::dispatch::_add(const cs::ev_flag ___evs, cs::io_event& ___obs) -> void {
+auto cs::dispatch::_add(cs::unique_ptr<cs::io_event>&& ___io) -> void {
+
+	auto it = _map.emplace(___io.get(), cs::move(___io));
+
+	cs::io_event* user_data = it.first->second.get();
+	const int descriptor = user_data->descriptor();
 
 	// -- macos ---------------------------------------------------------------
 
@@ -141,12 +192,12 @@ auto cs::dispatch::_add(const cs::ev_flag ___evs, cs::io_event& ___obs) -> void 
 
 	// create event
 	___event event {
-		.ident  = static_cast<uintptr_t>(___obs.descriptor()),
-		.filter = ___evs,
+		.ident  = static_cast<uintptr_t>(descriptor),
+		.filter = EVFILT_READ, // default for all io objects
 		.flags  = EV_ADD,
 		.fflags = 0U,
 		.data   = 0,
-		.udata  = &___obs
+		.udata  = user_data
 	};
 
 	// EV_CLEAR info: make
@@ -155,6 +206,7 @@ auto cs::dispatch::_add(const cs::ev_flag ___evs, cs::io_event& ___obs) -> void 
 	if (::kevent(_handle, &event, 1, nullptr, 0, nullptr) != 0)
 		throw cs::runtime_error{"failed to add descriptor to kqueue"};
 
+	std::cout << "added descriptor to dispatch: " << it.first->second->descriptor() << std::endl;
 
 	// -- linux ---------------------------------------------------------------
 
@@ -162,24 +214,23 @@ auto cs::dispatch::_add(const cs::ev_flag ___evs, cs::io_event& ___obs) -> void 
 
 	// create event
 	struct epoll_event event {
-		.events = ___evs,
+		.events = EPOLLIN, // default for all io objects
 		.data = {
-			.ptr = &___obs }
+			.ptr = user_data }
 	};
 
 	// add event
-	if (::epoll_ctl(_handle, EPOLL_CTL_ADD, ___obs.descriptor(), &event) == -1)
+	if (::epoll_ctl(_handle, EPOLL_CTL_ADD,
+					descriptor,
+					&event) == -1)
 		throw cs::runtime_error{"failed to add descriptor to epoll"};
 
 	#endif
-
-
 }
 
-/* remove */
-auto cs::dispatch::_remove(cs::io_event& ___obs) -> void {
+/* mod */
+auto cs::dispatch::_mod(const cs::ev_flag ___ev, cs::io_event& ___io) -> void {
 
-	std::cout << "removing descriptor from dispatch: " << ___obs.descriptor() << std::endl;
 
 	// -- macos ---------------------------------------------------------------
 
@@ -187,14 +238,64 @@ auto cs::dispatch::_remove(cs::io_event& ___obs) -> void {
 
 	// create event
 	struct kevent event {
-		.ident  = static_cast<uintptr_t>(___obs.descriptor()),
+		.ident  = static_cast<uintptr_t>(___io.descriptor()),
+		.filter = ___ev,
+		.flags  = EV_ENABLE,
+		.fflags = 0U,
+		.data   = 0,
+		.udata  = &___io
+	};
+
+	// modify event
+	if (::kevent(_handle, &event, 1, nullptr, 0, nullptr) == -1)
+		throw cs::runtime_error{"failed to modify descriptor in kqueue"};
+
+
+	// -- linux ---------------------------------------------------------------
+
+	#elif defined(___cs_os_linux)
+
+	// create event
+	struct epoll_event event {
+		.events = ___ev,
+		.data   = {
+			.ptr = &___io }
+	};
+
+	// modify event
+	if (::epoll_ctl(_handle, EPOLL_CTL_MOD, ___io.descriptor(), &event) == -1)
+		throw cs::runtime_error{"failed to modify descriptor in epoll"};
+
+	#endif
+
+}
+
+
+/* remove */
+auto cs::dispatch::_remove(cs::io_event& ___io) -> void {
+
+	// search for io event
+	auto it = _map.find(&___io);
+
+	if (it == _map.end())
+		throw cs::runtime_error{"io event not found in dispatch map, cannot remove it!"};
+
+	std::cout << "removing descriptor from dispatch: " << ___io.descriptor() << std::endl;
+
+
+	// -- macos ---------------------------------------------------------------
+
+	#if defined(___cs_os_macos)
+
+	// create event
+	struct kevent event {
+		.ident  = static_cast<uintptr_t>(___io.descriptor()),
 		.filter = EVFILT_READ,
 		.flags  = EV_DELETE,
 		.fflags = 0U,
 		.data   = 0,
-		.udata  = &___obs
+		.udata  = nullptr
 	};
-
 
 	// remove event
 	if (::kevent(_handle, &event, 1, nullptr, 0, nullptr) == -1) {
@@ -210,12 +311,42 @@ auto cs::dispatch::_remove(cs::io_event& ___obs) -> void {
 	// create event
 	struct epoll_event event {
 		.events = 0,
-		.data   = {reinterpret_cast<void*>(___obs.descriptor())}
+		.data   = {
+			.ptr = nullptr }
 	};
 
 	// remove event
-	if (::epoll_ctl(._handle, EPOLL_CTL_DEL, ___obs.descriptor(), &event) == -1)
+	if (::epoll_ctl(._handle, EPOLL_CTL_DEL, ___io.descriptor(), &event) == -1)
 		throw cs::runtime_error{"failed to remove descriptor from epoll"};
 
 	#endif
+
+
+	// -- common --------------------------------------------------------------
+
+	// erase from map
+	_map.erase(it);
+
 }
+
+/* run */
+auto cs::dispatch::_run(void) -> void {
+
+	static size_type i = 0U;
+
+	// wait
+	while (_running) {
+
+		cs::dispatch::_poll();
+
+		if (++i == 8U) {
+			::write(STDOUT_FILENO, "\r\x1b[2K", 5U);
+			i = 0U;
+		}
+
+		::write(STDOUT_FILENO, ".", 1);
+	}
+
+}
+
+
