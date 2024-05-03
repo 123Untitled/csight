@@ -5,7 +5,6 @@
 #if ___cs_requirements
 
 #include "cs/io_event.hpp"
-#include "cs/network/client.hpp"
 #include "cs/network/socket.hpp"
 
 
@@ -29,17 +28,8 @@ namespace cs {
 
 			// -- private members ---------------------------------------------
 
-			/* running */
-			bool _running;
-
-			/* port */
-			::in_port_t _port;
-
 			/* socket */
 			cs::socket _socket;
-
-			/* client */
-			cs::client _client;
 
 
 		public:
@@ -59,7 +49,7 @@ namespace cs {
 			server(___self&&) noexcept = default;
 
 			/* destructor */
-			~server(void) noexcept = default;
+			virtual ~server(void) noexcept = default;
 
 
 			// -- public assignment operators ---------------------------------
@@ -73,20 +63,14 @@ namespace cs {
 
 			// -- public overriden methods ------------------------------------
 
-			/* dispatch */
-			auto dispatch(const cs::ev_flag) -> void override;
+			/* read */
+			auto read(void) -> void override;
+
+			/* send */
+			auto send(void) -> void override;
 
 			/* descriptor */
 			auto descriptor(void) const noexcept -> int override;
-
-
-			// -- public methods ----------------------------------------------
-
-			/* run */
-			auto run(void) -> void;
-
-			/* stop */
-			auto stop(void) -> void;
 
 	}; // class server
 
