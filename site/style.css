@@ -13,10 +13,19 @@
 
 	/* background color */
 	background: #241E26;
+
 }
 
 body {
 	overflow: hidden;
+	background-color:#99ffca;
+	background-image:
+	radial-gradient(at 33% 29%, hsla(274,100%,54%,1) 0px, transparent 50%),
+	radial-gradient(at 67% 61%, hsla(211,100%,54%,1) 0px, transparent 50%);
+	/* 100% height */
+	height: 100vh;
+	/* 100% width */
+	width: 100vw;
 }
 
 .wrapper {
@@ -30,6 +39,8 @@ body {
 	max-width: 1000px;
 	width: 100%;
 	margin: 10vh auto;
+	/* opacity */
+	opacity: 0.9;
 }
 
 h1 {
