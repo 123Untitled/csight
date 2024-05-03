@@ -1,6 +1,7 @@
 #include "cs/network/client.hpp"
 #include "cs/network/dispatch.hpp"
 #include "cs/type_traits/move.hpp"
+#include "cs/diagnostics/exception.hpp"
 
 #include <iostream>
 #include <string>
@@ -198,7 +199,7 @@ auto cs::client::dispatch(const cs::ev_flag ___ev) -> void {
 				break;
 		}
 
-		std::cout << buffer << std::endl;
+		//std::cout << buffer << std::endl;
 
 
 
