@@ -126,15 +126,15 @@ override DEPFLAGS = -MT $@ -MMD -MP -MF $*.d
 # -- P H O N Y ----------------------------------------------------------------
 
 # phony targets
-.PHONY: all clean fclean re rm
+.PHONY: all clean fclean re rm .WAIT
 
 # not parallel
-.NOTPARALLEL: $(COMPILE_DB)
+.NOTPARALLEL: $(COMPILE_DB) re fclean clean rm
 
 
 # -- T A R G E T S ------------------------------------------------------------
 
-all: $(EXEC) $(COMPILE_DB)
+all: $(COMPILE_DB) .WAIT $(EXEC)
 	echo '[done]'
 
 $(EXEC): $(OBJS)
