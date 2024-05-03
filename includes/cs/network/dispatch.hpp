@@ -1,5 +1,5 @@
-#ifndef ___CS_DISPATCH_HPP___
-#define ___CS_DISPATCH_HPP___
+#ifndef ___CS_NETWORK_DISPATCH_HPP___
+#define ___CS_NETWORK_DISPATCH_HPP___
 
 #include "cs/config.hpp"
 #if ___cs_requirements
@@ -9,6 +9,9 @@
 #include "cs/containers/vector.hpp"
 #include "cs/io_event.hpp"
 #include "cs/network/event.hpp"
+#include "cs/memory/unique_ptr.hpp"
+
+#include <unordered_map>
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -37,56 +40,13 @@ namespace cs {
 			using ___event = struct ::epoll_event;
 			#endif
 
-			/* size type */
-			using ___size = cs::vector<___event>::size_type;
-
 
 			// -- private constants -------------------------------------------
 
 			/* timeout (ms) */
 			enum : long {
-				DISPATCH_TIMEOUT = 200U
+				DISPATCH_TIMEOUT = 128U
 			};
-
-
-			/* is event */
-			#if defined(___cs_os_macos)
-
-			enum : cs::ev_flag {
-				EV_MASK = ~EVFILT_READ
-						| ~EVFILT_WRITE
-						| ~EVFILT_AIO
-						| ~EVFILT_VNODE
-						| ~EVFILT_PROC
-						| ~EVFILT_SIGNAL
-						| ~EVFILT_TIMER
-						| ~EVFILT_MACHPORT
-						| ~EVFILT_FS
-						| ~EVFILT_USER
-						| ~EVFILT_VM
-						| ~EVFILT_EXCEPT
-						| ~EVFILT_SYSCOUNT
-			};
-
-
-			template <cs::ev_flag ___ev>
-			static constexpr bool is_event = (~___ev & EV_MASK) == 0;
-
-			#elif defined(___cs_os_linux)
-
-
-			/* is epoll event */
-			template <cs::ev_flag ___ev>
-			static constexpr bool is_event = (___ev & ~(EPOLLIN
-													  | EPOLLOUT
-													  | EPOLLRDHUP
-													  | EPOLLPRI
-													  | EPOLLERR
-													  | EPOLLHUP
-													  | EPOLLET
-													  | EPOLLONESHOT)) == 0;
-
-			#endif
 
 
 		private:
@@ -99,8 +59,22 @@ namespace cs {
 			/* events */
 			cs::vector<___event> _events;
 
+			/* map */
+			std::unordered_map<const cs::io_event*,
+				cs::unique_ptr<cs::io_event>> _map;
+
+			/* running */
+			bool _running;
+
+
 
 		public:
+
+			// -- public types ------------------------------------------------
+
+			/* size type */
+			using size_type = cs::vector<___event>::size_type;
+
 
 			// -- public methods ----------------------------------------------
 
@@ -108,20 +82,29 @@ namespace cs {
 			static auto poll(void) -> void;
 
 			/* add */
-			template <cs::ev_flag ___evs>
-			static auto add(cs::io_event& ___obs) -> void {
+			template <typename... ___ios>
+			static auto add(___ios&&... ___args) -> void {
 
-				// check for valid event
-				static_assert(___self::is_event<___evs>, "dispatch: event not supported");
+				auto& ___sh = ___self::_shared();
+				(___sh._add(cs::forward<___ios>(___args)), ...);
+			}
 
-				// call add
-				___self::_shared()._add(___evs, ___obs);
+			/* mod */
+			template <cs::ev_flag ___ev, typename... ___ios>
+			static auto mod(___ios&... ___args) -> void {
+
+				auto& ___sh = ___self::_shared();
+				(___sh._mod(___ev, ___args), ...);
 			}
 
 			/* remove */
 			static auto remove(cs::io_event&) -> void;
 
+			/* run */
+			static auto run(void) -> void;
 
+			/* stop */
+			static auto stop(void) -> void;
 
 
 		private:
@@ -155,7 +138,6 @@ namespace cs {
 			/* shared */
 			static auto _shared(void) -> ___self&;
 
-
 			/* data */
 			static auto _data(___event&) noexcept -> cs::io_event&;
 
@@ -169,40 +151,70 @@ namespace cs {
 			auto _poll(void) -> void;
 
 			/* wait */
-			auto _wait(void) -> ___size;
+			auto _wait(void) -> size_type;
 
 			/* add */
-			auto _add(const cs::ev_flag, cs::io_event&) -> void;
+			auto _add(cs::unique_ptr<cs::io_event>&&) -> void;
+
+			/* mod */
+			auto _mod(const cs::ev_flag, cs::io_event&) -> void;
 
 			/* remove */
 			auto _remove(cs::io_event&) -> void;
+
+			/* run */
+			auto _run(void) -> void;
 
 	}; // class dispatch
 
 
 
-	// -- non-member functions ------------------------------------------------
-
-	inline auto ev_read(const cs::ev_flag ___ev) noexcept -> bool {
-
-		#if defined(___cs_os_macos)
-		return ___ev & EVFILT_READ ? true : false;
-		#elif defined(___cs_os_linux)
-		return ___ev & EPOLLIN ? true : false;
-		#endif
-	}
-
-	inline auto ev_write(const cs::ev_flag ___ev) noexcept -> bool {
-
-		#if defined(___cs_os_macos)
-		return ___ev & EVFILT_WRITE ? true : false;
-		#elif defined(___cs_os_linux)
-		return ___ev & EPOLLOUT ? true : false;
-		#endif
-	}
 
 } // namespace cs
 
 #endif // ___cs_requirements
+#endif // ___CS_NETWORK_DISPATCH_HPP___
 
-#endif // ___CS_DISPATCH_HPP___
+
+
+
+
+			///* is event */
+			//#if defined(___cs_os_macos)
+			//
+			//enum : cs::ev_flag {
+			//	EV_MASK = ~EVFILT_READ
+			//			| ~EVFILT_WRITE
+			//			| ~EVFILT_AIO
+			//			| ~EVFILT_VNODE
+			//			| ~EVFILT_PROC
+			//			| ~EVFILT_SIGNAL
+			//			| ~EVFILT_TIMER
+			//			| ~EVFILT_MACHPORT
+			//			| ~EVFILT_FS
+			//			| ~EVFILT_USER
+			//			| ~EVFILT_VM
+			//			| ~EVFILT_EXCEPT
+			//			| ~EVFILT_SYSCOUNT
+			//};
+			//
+			//
+			//template <cs::ev_flag ___ev>
+			//static constexpr bool is_event = (~___ev & EV_MASK) == 0;
+			//
+			//#elif defined(___cs_os_linux)
+			//
+			//
+			///* is epoll event */
+			//template <cs::ev_flag ___ev>
+			//static constexpr bool is_event = (___ev & ~(EPOLLIN
+			//										  | EPOLLOUT
+			//										  | EPOLLRDHUP
+			//										  | EPOLLPRI
+			//										  | EPOLLERR
+			//										  | EPOLLHUP
+			//										  | EPOLLET
+			//										  | EPOLLONESHOT)) == 0;
+			//
+			//#endif
+
