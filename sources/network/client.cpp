@@ -157,89 +157,75 @@ cs::client::client(cs::socket&& ___so) noexcept
 }
 
 
-// -- public modifiers --------------------------------------------------------
-
-/* socket */
-auto cs::client::socket(cs::socket&& ___so) noexcept -> void {
-	_socket = cs::move(___so);
-}
-
 // -- public overriden methods ------------------------------------------------
 
-/* dispatch */
-auto cs::client::dispatch(const cs::ev_flag ___ev) -> void {
+/* read */
+auto cs::client::read(void) -> void {
 
 	std::string buffer{};
 
-	if (cs::ev_read(___ev)) {
+	std::cout << "\x1b[32mreading from client\x1b[0m" << std::endl;
 
-		std::cout << "\x1b[32mreading from client\x1b[0m" << std::endl;
+	char buff[1024];
 
-		char buff[1024];
+	while (true) {
 
-		while (true) {
+		std::cout << "reading socket... " << _socket << std::endl;
+		const auto ret = ::recv(_socket, buff, sizeof(buff), 0);
 
-			std::cout << "reading socket... " << _socket << std::endl;
-			const auto ret = ::recv(_socket, buff, sizeof(buff), 0);
-
-			if (ret == -1) {
-				perror("recv");
-				throw cs::runtime_error{"failed to read from client"};
-			}
-
-			if (ret == 0) {
-				std::cout << "\x1b[31mclient disconnected\x1b[0m" << std::endl;
-				cs::io_event::register_for_removal(*this);
-				return;
-			}
-
-			buffer.append(buff, (size_t)ret);
-
-			if ((size_t)ret < sizeof(buff))
-				break;
+		if (ret == -1) {
+			perror("recv");
+			throw cs::runtime_error{"failed to read from client"};
 		}
 
-		//std::cout << buffer << std::endl;
-
-
-
-		//std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
-
-
-		std::string path;
-
-		if (buffer.find("GET / ") != std::string::npos) {
-			path = "site/index.html";
-			serve_file(path, "text/html");
+		if (ret == 0) {
+			std::cout << "\x1b[31mclient disconnected\x1b[0m" << std::endl;
+			cs::dispatch::remove(*this);
+			return;
 		}
 
-		else if (buffer.find("GET /style.css ") != std::string::npos) {
-			path = "site/style.css";
-			serve_file(path, "text/css");
-		}
+		buffer.append(buff, (size_t)ret);
 
-		else if (buffer.find("GET /issues2.json ") != std::string::npos) {
-			path = "site/issues2.json";
-			serve_file(path, "application/json");
-		}
-
-		//else if (buffer.find("GET /favicon.png ") != std::string::npos) {
-		//	std::string fav = generate_favicon_png();
-		//	::write(_socket, fav.c_str(), fav.size());
-		//}
-	}
-	else if (cs::ev_write(___ev)) {
-		std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
-		serve_index();
+		if ((size_t)ret < sizeof(buff))
+			break;
 	}
 
-	else {
-		std::cout << "\x1b[31munknown event\x1b[0m" << std::endl;
+	//std::cout << buffer << std::endl;
+
+
+
+	//std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
+
+
+	std::string path;
+
+	if (buffer.find("GET / ") != std::string::npos) {
+		path = "site/index.html";
+		serve_file(path, "text/html");
 	}
 
-	//if (count == 2) {
-	//	cs::shutdown(_socket, SHUT_RDWR);
+	else if (buffer.find("GET /style.css ") != std::string::npos) {
+		path = "site/style.css";
+		serve_file(path, "text/css");
+	}
+
+	else if (buffer.find("GET /issues2.json ") != std::string::npos) {
+		path = "site/issues2.json";
+		serve_file(path, "application/json");
+	}
+
+	//else if (buffer.find("GET /favicon.png ") != std::string::npos) {
+	//	std::string fav = generate_favicon_png();
+	//	::write(_socket, fav.c_str(), fav.size());
 	//}
+
+	//cs::dispatch::mod<cs::ev_write>(*this);
+}
+
+/* send */
+auto cs::client::send(void) -> void {
+	std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
+	//serve_index();
 }
 
 /* descriptor */
