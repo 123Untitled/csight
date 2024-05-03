@@ -1,6 +1,7 @@
 #include "cs/network/server.hpp"
-#include "cs/diagnostics/exception.hpp"
 #include "cs/type_traits/move.hpp"
+#include "cs/network/dispatch.hpp"
+
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,8 +13,6 @@
 #include "cs/network/dispatch.hpp"
 #include "cs/network/address.hpp"
 #include "cs/browser.hpp"
-
-
 
 
 
@@ -44,7 +43,8 @@ cs::server::server(const ::in_port_t ___port)
 	cs::listen(_socket, 1);
 
 	// add server to dispatcher
-	___dispatch::add<cs::dispatch_event::EV_READ>(_dispatch, *this);
+	cs::dispatch::add<cs::dispatch_ev::EV_READ>(*this);
+
 }
 
 
@@ -57,14 +57,15 @@ auto cs::server::run(void) -> void {
 
 	// wait
 	while (_running) {
+		::write(STDOUT_FILENO, ".", 1);
 		//std::cout << "\x1b[33mwaiting for events\x1b[0m" << std::endl;
-		_dispatch.wait();
+		cs::dispatch::poll();
 
-		auto& ___lst = cs::io_event::remover();
-		for (cs::vector<cs::io_event*>::size_type i = 0; i < ___lst.size(); ++i) {
-			___dispatch::remove(_dispatch, *___lst[i]);
-		}
-		___lst.clear();
+		//auto& ___lst = cs::io_event::remover();
+		//for (cs::vector<cs::io_event*>::size_type i = 0; i < ___lst.size(); ++i) {
+		//	___dispatch::remove(_dispatch, *___lst[i]);
+		//}
+		//___lst.clear();
 	}
 }
 
@@ -101,9 +102,9 @@ auto cs::server::dispatch(const cs::ev_flag ___ev) -> void {
 		_client.socket(cs::move(___cli));
 
 		// add to dispatcher
-		___dispatch::add<cs::dispatch_event::EV_READ
+		cs::dispatch::add<cs::dispatch_ev::EV_READ
 					   //| cs::dispatch_event::EV_WRITE
-			>(_dispatch, _client);
+			>(_client);
 	}
 }
 
