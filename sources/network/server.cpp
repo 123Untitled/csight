@@ -1,6 +1,8 @@
+#include "cs/network/address.hpp"
 #include "cs/network/server.hpp"
-#include "cs/type_traits/move.hpp"
 #include "cs/network/dispatch.hpp"
+#include "cs/network/client.hpp"
+#include "cs/type_traits/move.hpp"
 
 
 #include <sys/socket.h>
@@ -9,10 +11,6 @@
 
 
 #include <iostream>
-
-#include "cs/network/dispatch.hpp"
-#include "cs/network/address.hpp"
-#include "cs/browser.hpp"
 
 
 
@@ -25,7 +23,8 @@ cs::server::server(void)
 
 /* port constructor */
 cs::server::server(const ::in_port_t ___port)
-: _running{true}, _port{___port}, _socket{cs::make_socket<AF_INET>()} {
+: /*_running{true}, _port{___port}, */
+	_socket{cs::make_socket<AF_INET>()} {
 
 	// reuse address
 	cs::reuse_address(_socket);
@@ -34,7 +33,7 @@ cs::server::server(const ::in_port_t ___port)
 	cs::non_blocking(_socket);
 
 	// create address
-	cs::address addr{::in_addr{INADDR_ANY}, _port};
+	cs::address addr{::in_addr{INADDR_ANY}, ___port};
 
 	// bind
 	cs::bind(_socket, addr);
@@ -42,70 +41,44 @@ cs::server::server(const ::in_port_t ___port)
 	// listen
 	cs::listen(_socket, 1);
 
-	// add server to dispatcher
-	cs::dispatch::add<cs::dispatch_ev::EV_READ>(*this);
+	std::cout << "\x1b[32mserver listening on port " << ___port << "\x1b[0m" << std::endl;
 
-}
-
-
-// -- public methods ----------------------------------------------------------
-
-/* run */
-auto cs::server::run(void) -> void {
-
-	open_browser(_port);
-
-	// wait
-	while (_running) {
-		::write(STDOUT_FILENO, ".", 1);
-		//std::cout << "\x1b[33mwaiting for events\x1b[0m" << std::endl;
-		cs::dispatch::poll();
-
-		//auto& ___lst = cs::io_event::remover();
-		//for (cs::vector<cs::io_event*>::size_type i = 0; i < ___lst.size(); ++i) {
-		//	___dispatch::remove(_dispatch, *___lst[i]);
-		//}
-		//___lst.clear();
-	}
 }
 
 
 // -- public overriden methods ------------------------------------------------
 
-/* dispatch */
-auto cs::server::dispatch(const cs::ev_flag ___ev) -> void {
+/* read */
+auto cs::server::read(void) -> void {
 
+	std::cout << "\x1b[31mserver accepting client\x1b[0m" << std::endl;
 
-	if (cs::ev_read(___ev)) {
+	// address
+	cs::address addr;
 
-		std::cout << "\x1b[32mserver accepting client\x1b[0m" << std::endl;
+	// accept
+	auto ___cli = cs::accept(_socket, addr);
 
-		// address
-		cs::address addr;
-
-		// accept
-		auto ___cli = cs::accept(_socket, addr);
-
-		// shutdown if not localhost
-		if (not addr.is_localhost()) {
-			::write(___cli, "wesh, t'es qui ?", 16);
-			cs::shutdown(___cli, SHUT_RDWR);
-			return;
-		}
-
-		std::cout << "new client: " << ___cli << std::endl;
-
-		// non-blocking
-		cs::non_blocking(___cli);
-
-		// client get ownership
-		_client.socket(cs::move(___cli));
-
-		// add to dispatcher
-		cs::dispatch::add<cs::dispatch_ev::EV_READ
-					   //| cs::dispatch_event::EV_WRITE
-			>(_client);
+	// shutdown if not localhost
+	if (not addr.is_localhost()) {
+		cs::shutdown(___cli, SHUT_RDWR);
+		return;
 	}
+
+	std::cout << "new client: " << ___cli << std::endl;
+
+	// non-blocking
+	cs::non_blocking(___cli);
+
+	// add to dispatcher
+	cs::dispatch::add(
+			cs::make_unique<cs::client>(
+				cs::move(___cli))
+	);
+}
+
+/* send */
+auto cs::server::send(void) -> void {
 }
 
 /* descriptor */
