@@ -5,7 +5,7 @@
 #if ___cs_requirements
 
 #include "cs/containers/vector.hpp"
-#include "cs/network/dispatch.hpp"
+#include "cs/network/event.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
