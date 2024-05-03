@@ -1,5 +1,5 @@
-#ifndef ___CS_SERVER_HPP___
-#define ___CS_SERVER_HPP___
+#ifndef ___CS_NETWORK_SERVER_HPP___
+#define ___CS_NETWORK_SERVER_HPP___
 
 #include "cs/config.hpp"
 #if ___cs_requirements
@@ -7,7 +7,6 @@
 #include "cs/io_event.hpp"
 #include "cs/network/client.hpp"
 #include "cs/network/socket.hpp"
-#include "cs/network/dispatch.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -27,9 +26,6 @@ namespace cs {
 			/* self type */
 			using ___self = cs::server;
 
-			/* dispatch type */
-			using ___dispatch = cs::dispatch<cs::io_event>;
-
 
 			// -- private members ---------------------------------------------
 
@@ -44,9 +40,6 @@ namespace cs {
 
 			/* client */
 			cs::client _client;
-
-			/* dispatch */
-			___dispatch _dispatch;
 
 
 		public:
@@ -100,5 +93,4 @@ namespace cs {
 } // namespace cs
 
 #endif // ___cs_requirements
-
-#endif // ___CS_SERVER_HPP___
+#endif // ___CS_NETWORK_SERVER_HPP___
