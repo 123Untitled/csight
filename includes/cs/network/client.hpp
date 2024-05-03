@@ -51,7 +51,7 @@ namespace cs {
 			client(___self&&) noexcept = default;
 
 			/* destructor */
-			~client(void) noexcept = default;
+			virtual ~client(void) noexcept = default;
 
 
 			// -- public assignment operators ---------------------------------
@@ -63,20 +63,16 @@ namespace cs {
 			auto operator=(___self&&) noexcept -> ___self& = default;
 
 
-			// -- public modifiers --------------------------------------------
-
-			/* socket */
-			auto socket(cs::socket&&) noexcept -> void;
-
-
 			// -- public overriden methods ------------------------------------
 
-			/* dispatch */
-			auto dispatch(const cs::ev_flag) -> void override;
+			/* read */
+			auto read(void) -> void override;
+
+			/* send */
+			auto send(void) -> void override;
 
 			/* descriptor */
 			auto descriptor(void) const noexcept -> int override;
-
 
 
 		private:
