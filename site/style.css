@@ -70,6 +70,14 @@ label {
 
 	/* rounded corners */
 	border-radius: 10px 10px 10px 10px;
+
+	/* transition */
+	transition: border 1s ease;
+}
+
+/* label hover */
+label:hover {
+	border: 1px solid #392FaC;
 }
 
 label div:first-child {
