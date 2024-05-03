@@ -89,7 +89,7 @@ override DEPS := $(OBJS:%.o=%.d)
 override MKDIR := mkdir -p
 
 # remove recursively force
-override RM := rm -rvf
+override RM := rm -vfr
 
 
 # -- C O M P I L E R ----------------------------------------------------------
@@ -126,10 +126,10 @@ override DEPFLAGS = -MT $@ -MMD -MP -MF $*.d
 # -- P H O N Y ----------------------------------------------------------------
 
 # phony targets
-.PHONY: all clean fclean re rm .WAIT
+.PHONY: all clean fclean re .WAIT
 
 # not parallel
-.NOTPARALLEL: $(COMPILE_DB) re fclean clean rm
+.NOTPARALLEL: $(COMPILE_DB) re fclean clean
 
 
 # -- T A R G E T S ------------------------------------------------------------
@@ -151,14 +151,11 @@ $(COMPILE_DB): $(SRCS) Makefile
 	$(call GENERATE_CDB)
 
 clean:
-	$(RM) $(OBJS) $(DEPS) $(COMPILE_DB) .cache
+	$(RM) $(EXEC) $(OBJS) $(DEPS) $(COMPILE_DB) .cache | wc -l | awk '{print $$1 " files removed"}'
 
 fclean: clean
-	$(RM) $(EXEC)
 
 re: fclean all
-
-rm: fclean
 
 
 # generate compile_commands.json
