@@ -1,10 +1,9 @@
-#ifndef ___IO_EVENT_HPP___
-#define ___IO_EVENT_HPP___
+#ifndef ___CS_IO_EVENT_HPP___
+#define ___CS_IO_EVENT_HPP___
 
 #include "cs/config.hpp"
 #if ___cs_requirements
 
-#include "cs/containers/vector.hpp"
 #include "cs/network/event.hpp"
 
 
@@ -18,12 +17,6 @@ namespace cs {
 	class io_event {
 
 
-		// -- friends ---------------------------------------------------------
-
-		/* server as friend */
-		friend class server;
-
-
 		private:
 
 			// -- private types -----------------------------------------------
@@ -31,27 +24,6 @@ namespace cs {
 			/* self type */
 			using ___self = cs::io_event;
 
-
-			// -- private methods ---------------------------------------------
-
-			/* remove */
-			static auto remover(void) noexcept -> cs::vector<___self*>& {
-				static cs::vector<___self*> ___list{};
-				return ___list;
-			}
-
-
-		protected:
-
-			// -- protected methods -------------------------------------------
-
-			/* register for removal */
-			static auto register_for_removal(___self& ___obs) -> void {
-
-				auto& ___list = ___self::remover();
-
-				___list.push_back(&___obs);
-			}
 
 		public:
 
@@ -81,8 +53,11 @@ namespace cs {
 
 			// -- public interface --------------------------------------------
 
-			/* dispatch */
-			virtual auto dispatch(const cs::ev_flag) -> void = 0;
+			/* read */
+			virtual auto read(void) -> void = 0;
+
+			/* send */
+			virtual auto send(void) -> void = 0;
 
 			/* descriptor */
 			virtual auto descriptor(void) const noexcept -> int = 0;
@@ -92,5 +67,4 @@ namespace cs {
 } // namespace cs
 
 #endif // ___cs_requirements
-
 #endif // ___IO_EVENT_HPP___
