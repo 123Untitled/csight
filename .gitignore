@@ -10,6 +10,9 @@
 # ignore dependency files
 /sources/**/*.d
 
+# ignore precompiled headers
+/includes/**/*.pch
+
 # ignore clangd cache
 /.cache
 
