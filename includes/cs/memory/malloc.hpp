@@ -1,5 +1,5 @@
-#ifndef CS_MALLOC_HEADER
-#define CS_MALLOC_HEADER
+#ifndef ___CS_MEMORY_MALLOC_HPP___
+#define ___CS_MEMORY_MALLOC_HPP___
 
 #include "cs/config.hpp"
 
@@ -56,5 +56,4 @@ namespace cs {
 } // namespace cs
 
 #endif // ___cs_requirements
-
-#endif // CS_MALLOC_HEADER
+#endif // ___CS_MEMORY_MALLOC_HPP___
