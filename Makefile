@@ -50,7 +50,7 @@ override MAKEFLAGS += --warn-undefined-variables --no-builtin-rules \
 override PROJECT := csight
 
 # main executable
-override EXEC := exec_$(PROJECT)
+override EXEC := $(PROJECT)
 
 # compile commands database
 override COMPILE_DB := compile_commands.json
