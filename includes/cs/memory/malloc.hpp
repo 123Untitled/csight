@@ -6,11 +6,15 @@
 #if ___cs_requirements
 
 #if    !__has_builtin(__builtin_malloc)  \
+	|| !__has_builtin(__builtin_calloc)  \
 	|| !__has_builtin(__builtin_realloc) \
 	|| !__has_builtin(__builtin_free)
 #	define CS_USE_SYSTEM_MALLOC
 #	include <cstdlib>
 #endif
+
+#include "cs/diagnostics/exception.hpp"
+#include "cs/types.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -22,24 +26,50 @@ namespace cs {
 
 	/* malloc */
 	template <typename ___type>
-	auto malloc(const decltype(sizeof(0)) ___sz = 1U) noexcept -> ___type* {
+	auto malloc(const cs::size_t ___sz = 1U) -> ___type* {
 
 		#if defined(CS_USE_SYSTEM_MALLOC)
-			return static_cast<___type*>(::malloc(___sz * sizeof(___type)));
+			void* ptr = ::malloc(___sz * sizeof(___type));
 		#else
-			return static_cast<___type*>(__builtin_malloc(___sz * sizeof(___type)));
+			void* ptr = __builtin_malloc(___sz * sizeof(___type));
 		#endif
+
+		if (ptr == nullptr)
+			throw cs::runtime_error{"malloc failed"};
+
+		return static_cast<___type*>(ptr);
+	}
+
+	/* calloc */
+	template <typename ___type>
+	auto calloc(const cs::size_t ___sz) -> ___type* {
+
+		#if defined(CS_USE_SYSTEM_MALLOC)
+			void* ptr = ::calloc(___sz, sizeof(___type));
+		#else
+			void* ptr = __builtin_calloc(___sz, sizeof(___type));
+		#endif
+
+		if (ptr == nullptr)
+			throw cs::runtime_error{"calloc failed"};
+
+		return static_cast<___type*>(ptr);
 	}
 
 	/* realloc */
 	template <typename ___type>
-	auto realloc(___type* ___ptr, const decltype(sizeof(0)) ___sz) noexcept -> ___type* {
+	auto realloc(___type* ___ptr, const cs::size_t ___sz) -> ___type* {
 
 		#if defined(CS_USE_SYSTEM_MALLOC)
-			return static_cast<___type*>(::realloc(___ptr, ___sz * sizeof(___type)));
+			void* ptr = ::realloc(___ptr, ___sz * sizeof(___type)));
 		#else
-			return static_cast<___type*>(__builtin_realloc(___ptr, ___sz * sizeof(___type)));
+			void* ptr = __builtin_realloc(___ptr, ___sz * sizeof(___type));
 		#endif
+
+		if (ptr == nullptr)
+			throw cs::runtime_error{"realloc failed"};
+
+		return static_cast<___type*>(ptr);
 	}
 
 	/* free */
