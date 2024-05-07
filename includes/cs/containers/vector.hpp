@@ -2,18 +2,14 @@
 #define CS_VECTOR_HEADER
 
 #include "cs/config.hpp"
+#if ___cs_requirements
+
 #include "cs/memory/malloc.hpp"
 #include "cs/memory/memcpy.hpp"
 #include "cs/type_traits/is_trivially_copyable.hpp"
 #include "cs/type_traits/is_trivially_destructible.hpp"
 #include "cs/type_traits/forward.hpp"
-
-// bad alloc
-#include <new>
-
-
-
-#if ___cs_requirements
+#include "cs/memory/lifecycle.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -36,14 +32,6 @@ namespace cs {
 		/* trivially destructible assertion */
 		static_assert(cs::is_trivially_destructible<___type>,
 				"allocation: type must be trivially destructible");
-
-
-		private:
-
-			// -- private types -----------------------------------------------
-
-			/* self type */
-			using ___self = cs::vector<___type>;
 
 
 		public:
@@ -71,6 +59,15 @@ namespace cs {
 
 		private:
 
+			// -- private types -----------------------------------------------
+
+			/* self type */
+			using ___self = cs::vector<___type>;
+
+			/* lifecycle type */
+			using ___lifecycle = cs::lifecycle<value_type>;
+
+
 			// -- private members ---------------------------------------------
 
 			/* data */
@@ -95,9 +92,6 @@ namespace cs {
 			/* capacity constructor */
 			vector(const size_type ___sz)
 			: _data{cs::malloc<value_type>(___sz)}, _size{0U}, _capacity{___sz} {
-
-				if (_data == nullptr)
-					throw std::bad_alloc{};
 			}
 
 			/* copy constructor */
@@ -107,11 +101,10 @@ namespace cs {
 				if (_size == 0U)
 					return;
 
+				// allocate memory
 				_data = cs::malloc<value_type>(_size);
 
-				if (_data == nullptr)
-					throw std::bad_alloc{};
-
+				// copy data
 				cs::memcpy(_data, ___ot._data, _size);
 			}
 
@@ -232,10 +225,12 @@ namespace cs {
 			/* push back */
 			auto push_back(const value_type& ___val) -> void {
 
+				// check capacity
 				if (_size == _capacity)
 					_reserve(_expand());
 
-				new (_data + _size) value_type{___val};
+				// copy construct
+				___lifecycle::construct(_data + _size, ___val);
 
 				++_size;
 			}
@@ -243,10 +238,12 @@ namespace cs {
 			/* push back */
 			auto push_back(value_type&& ___val) -> void {
 
+				// check capacity
 				if (_size == _capacity)
 					_reserve(_expand());
 
-				new (_data + _size) value_type{static_cast<value_type&&>(___val)};
+				// move construct
+				___lifecycle::construct(_data + _size, cs::move(___val));
 
 				++_size;
 			}
@@ -260,12 +257,31 @@ namespace cs {
 			template <typename... ___params>
 			auto emplace_back(___params&&... ___args) -> void {
 
+				// check capacity
 				if (_size == _capacity)
 					_reserve(_expand());
 
-				new (_data + _size) value_type{cs::forward<___params>(___args)...};
+				// emplace construct
+				___lifecycle::construct(_data + _size,
+						cs::forward<___params>(___args)...);
 
 				++_size;
+			}
+
+			/* append */
+			auto append(const_pointer ___ptr, const size_type ___sz) -> void {
+
+				// compute required capacity
+				const auto ___cp = _size + ___sz;
+
+				// check capacity
+				if (_capacity < ___cp)
+					_reserve(_try_expand(___cp));
+
+				// copy data
+				cs::memcpy(_data + _size, ___ptr, ___sz);
+
+				_size += ___sz;
 			}
 
 
@@ -317,19 +333,32 @@ namespace cs {
 			/* reserve */
 			auto _reserve(const size_type ___cp) -> void {
 
+				// reallocate new memory
 				auto ___ptr = cs::realloc<value_type>(_data, ___cp);
 
-				if (___ptr == nullptr)
-					throw std::bad_alloc{};
-
+				// update members
 				_data     = ___ptr;
 				_capacity = ___cp;
 			}
 
 
-	}; // class allocation
+	}; // class vector
+
+
 
 } // namespace cs
+
+#include <iostream>
+
+	// -- operators << --------------------------------------------------------
+
+	/* operator << */
+	inline auto operator<<(std::ostream& ___os, const cs::vector<char>& ___vec) -> std::ostream& {
+
+		___os.write(___vec.data(), (std::streamsize)___vec.size());
+
+		return ___os;
+	}
 
 #endif // ___cs_requirements
 
