@@ -23,6 +23,12 @@ namespace cs {
 
 		public:
 
+			// -- public constants --------------------------------------------
+
+			/* invalid descriptor */
+			enum : int { INVALID_DESCRIPTOR = -1 };
+
+
 			// -- public lifecycle --------------------------------------------
 
 			/* default constructor */
@@ -82,10 +88,6 @@ namespace cs {
 
 		protected:
 
-			// -- private enums -----------------------------------------------
-
-			/* invalid descriptor */
-			enum : int { INVALID_DESCRIPTOR = -1 };
 
 
 			// -- private members ---------------------------------------------
