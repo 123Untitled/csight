@@ -41,6 +41,7 @@ void signal_handler(int sig) {
 int main(int ac, char** av) {
 
 
+
 	// signal handler
 	if (signal(SIGINT, signal_handler) == SIG_ERR) {
 		perror("signal");
@@ -67,7 +68,12 @@ int main(int ac, char** av) {
 
 		cs::core::map m;
 		cs::descriptor dsc{STDIN_FILENO};
+
+
+
 		cs::reader<4096U> rd;
+
+
 		cs::parser prs;
 
 		do {
