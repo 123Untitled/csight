@@ -3,12 +3,13 @@
 
 
 #include "cs/config.hpp"
-#include "cs/containers/list.hpp"
 #include "cs/core/issue.hpp"
+#include "cs/string.hpp"
+#include "cs/map.hpp"
+#include "cs/system/write.hpp"
+#include "cs/system/open.hpp"
 
 #include <fstream>
-#include <map>
-//#include <vector>
 
 
 #if ___cs_requirements
@@ -29,172 +30,191 @@ namespace cs {
 	// issue class contains file path, line, column, message, and code snippet (code is actually not implemented)
 
 
-
-
-	// generate json file to display c/c++ compilation errors
-
-	// exemple:
-
-	/*
-		const errors = {
-
-		{
-		"files": [
-			{
-				"fileName": "./inc/meta/type_at.hpp",
-				"errors": [
-					{
-						"lineNumber": 27,
-						"columnNumber": 4,
-						"message": "error: static_assert failed due to requirement '3UL < sizeof...(A)' 'TYPE_AT: INDEX OUT OF RANGE!'"
-					},
-					{
-						"lineNumber": 65,
-						"columnNumber": 2,
-						"message": "note: in instantiation of template class 'xns::impl::type_at<3, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
-					}
-				]
-			},
-			{
-				"fileName": "./inc/indexed_element.hpp",
-				"errors": [
-					{
-						"lineNumber": 50,
-						"columnNumber": 22,
-						"message": "note: in instantiation of template type alias 'type_at' requested here"
-					}
-				]
-			}
-			// Autres fichiers et erreurs...
-		]
-	}
-	*/
-
-
 	/* to json string */
-	inline auto to_json(const std::string& str) -> std::string {
+	inline auto to_json_string(const cs::string& str) -> cs::string {
 
 		// this function escapes special characters in a string to make it a valid JSON string
 
-		std::string result;
+		cs::string json;
 
-		result.reserve(str.size() + 2);
+		json.reserve(str.size() + (str.size() / 2U));
 
-		result.push_back('\"');
+		json.push_back('"');
 
-		for (const char c : str) {
+		for (cs::string::size_type i = 0U; i < str.size(); ++i) {
 
-			switch (c) {
+			switch (str[i]) {
 
-				case '\\': result += "\\\\"; break;
-				case '\"': result += "\\\""; break;
-				case '\b': result += "\\b";  break;
-				case '\f': result += "\\f";  break;
-				case '\n': result += "\\n";  break;
-				case '\r': result += "\\r";  break;
-				case '\t': result += "\\t";  break;
+				// backslash
+				case '\\':
+					json.append("\\\\");
+					break;
+
+				// double quote
+				case '"':
+					json.append("\\\"");
+					break;
+
 				default:
-					if (c >= '\x00' && c <= '\x1f') {
-						result += "\\u" + std::to_string(static_cast<int>(c));
+
+					// check control character
+					if (cs::is_ctrl(str[i])) {
+
+						// convert to unicode
+						char buff[] {
+							'\\', 'u', '0', '0', '0', '0', '\0'
+						};
+
+						// convert to hex
+						auto num = static_cast<unsigned char>(str[i]);
+
+						// convert to hex
+
+						unsigned j =  6U;
+
+						do {
+							buff[--j] = "0123456789abcdef"[num & 0x0f];
+							num >>= 4;
+						} while (num);
+
+						// call array append
+						json.append(buff);
 					}
-					else { result.push_back(c); }
+					else
+						json.push_back(str[i]);
 			}
 
 		}
 
-		result.push_back('\"');
+		json.push_back('"');
 
-		return result;
+		return json;
+	}
+
+
+	/* to html string */
+	inline auto to_html_string(const cs::string& str) -> cs::string {
+
+		// this function escapes special characters in a string to make it a valid HTML string
+
+		cs::string html;
+
+		html.reserve(str.size() + (str.size() / 2U));
+
+		for (cs::string::size_type i = 0U; i < str.size(); ++i) {
+
+			switch (str[i]) {
+
+				// ampersand
+				case '&':
+					html.append("&amp;");
+					break;
+
+				// less than
+				case '<':
+					html.append("&lt;");
+					break;
+
+				// greater than
+				case '>':
+					html.append("&gt;");
+					break;
+
+				// double quote
+				case '"':
+					html.append("&quot;");
+					break;
+
+				// single quote
+				case '\'':
+					html.append("&apos;");
+					break;
+
+				// new line
+				case ' ':
+					html.append("&nbsp;");
+					break;
+
+				default:
+					html.push_back(str[i]);
+			}
+
+		}
+
+		return html;
 	}
 
 
 
-	inline auto generate_js(cs::list<cs::issue> ___lst) -> std::string {
+	inline auto generate_json(const cs::core::map& ___map) -> cs::string {
 
 
-		std::string result;
-		result.reserve(1024);
+		cs::string json;
+		json.reserve(1024);
 
-		result += "[\n";
+		//json.append("{\n\t\"files\": [\n");
+		// non-formated version
+		json.append("{\"files\":[");
 
-		for (const auto& error : ___lst) {
-			result += "{\n";
-			// add file name
-			result += "\t\"fileName\": " + to_json(std::string{error.path().data(), error.path().size()}) + ",\n";
+		___map.for_each([](const cs::core::entry& e, cs::string& json) {
 
-			result += "\t\"line\": " + std::to_string(error.line()) + ",\n";
-			result += "\t\"column\": " + std::to_string(error.column()) + ",\n";
+			//json.append("\t\t{\n\t\t\t\"file\": ",
+			//			to_json_string(e.file()), ",\n");
+			// non-formated version
+			json.append("{\"file\":",
+						to_json_string(e.file()), ",");
 
-			std::string message{error.message().data(), error.message().size()};
+			const auto& i = e.issues();
 
-			result += "\t\"message\": " + to_json(message) + "\n";
-			result += "},\n";
-		}
+			//json.append("\t\t\t\"issues\": [\n");
+			// non-formated version
+			json.append("\"issues\":[");
 
-		// remove last comma
-		result.pop_back();
-		result.pop_back();
+			i.for_each([](const cs::core::issue& i, cs::string& json) {
 
-		result += "\n";
+				const auto line = std::to_string(i.line());
+				const auto column = std::to_string(i.column());
 
-		result += "]\n";
+				//json.append("\t\t\t\t{\n\t\t\t\t\t\"line\": ",
+				//			cs::string_view{line.data(), line.size()},
+				//			",\n\t\t\t\t\t\"column\": ",
+				//			cs::string_view{column.data(), column.size()},
+				//			",\n\t\t\t\t\t\"message\": ",
+				//			to_json_string(i.message()),
+				//			"\n\t\t\t\t},\n");
 
-		std::cout << result << std::endl;
+				// non-formated version
+				json.append("{\"line\":",
+							cs::string_view{line.data(), line.size()},
+							",\"column\":",
+							cs::string_view{column.data(), column.size()},
+							",\"message\":",
+							to_json_string(i.message()),
+							"},");
 
-		// write to file
-		std::ofstream file("issues2.js");
+			}, json);
 
-		file << result;
-		file.close();
+			//json.pop_back(2U);
+			//json.append("\n\t\t\t]\n\t\t},\n");
+			// non-formated version
+			json.pop_back(1U);
+			json.append("]},");
 
-		return result;
-
-
-		// Group errors by file
-		//std::map<std::string, cs::list<cs::issue>> ___map;
-		//
-		//for (const auto& error : ___lst) {
-		//	std::string path{error.path().data(), error.path().size()};
-		//	___map[path].push_back(error);
-		//}
-
-
-		//std::ofstream file("issues.js");
-		//std::ofstream file("issues.json");
-
-		//file << "const errors = ";
-		//
-		//file << "{\n";
-		//file << "\"files\": [\n";
-		//
-		//
-		//for (const auto& f : ___map) {
-		//	file << "{\n";
-		//	file << "\"filename\": " << to_json(f.first) << ",\n";
-		//	file << "\"errors\": [\n";
-		//
-		//	for (const auto& error : f.second) {
-		//		file << "{\n";
-		//		file << "\"line\": " << error.line() << ",\n";
-		//		file << "\"column\": " << error.column() << ",\n";
-		//
-		//		std::string message{error.message().data(), error.message().size()};
-		//
-		//		file << "\"message\": " << to_json(message) << "\n";
-		//		file << "},\n";
-		//	}
-		//
-		//	file << "]\n";
-		//	file << "},\n";
-		//}
-		//
-		//file << "]\n";
-		//file << "}\n";
-		//
-		//file.close();
+		}, json);
 
 
+		//json.pop_back(2U);
+		//json.append("\n\t]\n}\n");
+		// non-formated version
+		json.pop_back(1U);
+		json.append("]}");
 
+
+		const auto dsc = cs::open("site/issues.json", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+
+		cs::write(dsc, json);
+
+		return json;
 	}
 
 
@@ -216,61 +236,4 @@ namespace cs {
 } // namespace cs
 
 #endif // ___cs_requirements
-
 #endif // CS_HTML_HEADER
-
-
-	inline void generate_html(cs::list<cs::issue>& ___errs) {
-
-		return;
-		//std::vector<cs::issue> errors;
-		//
-		//for (cs::issue& error : ___errs) {
-		//	errors.push_back(std::move(error));
-		//}
-
-
-		std::ofstream file("err.html");
-		file << "<!DOCTYPE html>\n<html lang='en'><head><meta charset='UTF-8'><title>Compilation Errors</title>";
-		file << "<style>body{font-family: Arial, sans-serif;} .error{margin-bottom: 20px;} .menu{background: #f0f0f0; padding: 10px;} select{padding: 5px; margin-right: 10px;} pre{background-color: #eeeeee; padding: 10px;}</style>";
-		file << "</head><body><h1>Compilation Errors</h1>";
-
-		// Group errors by file
-		std::map<std::string, cs::list<cs::issue>> ___map;
-
-		for (const auto& error : ___errs) {
-			std::string path{error.path().data(), error.path().size()};
-			___map[path].push_back(error);
-		}
-
-		// Dropdown menu for file selection
-		file << "<div class='menu'><label for='fileSelect'>Choose a file:</label><select id='fileSelect' onchange='showErrors(this.value);'>";
-		file << "<option value=''>Select a file</option>";
-
-		for (const auto& filename : ___map) {
-			file << "<option value='" << filename.first << "'>" << filename.first << "</option>";
-		}
-		file << "</select></div>";
-
-		// Display errors
-		for (const auto& f : ___map) {
-			file << "<div id='" << f.first << "' class='errors' style='display:none;'>";
-			for (const auto& error : f.second) {
-				file << "<div class='error'>";
-				file << "<h2>Error at line " << error.line() << ", column " << error.column() << "</h2>";
-				std::string message{error.message().data(), error.message().size()};
-				file << "<p>" << message << "</p>";
-				file << "</div>";
-			}
-			file << "</div>";
-		}
-
-		// JavaScript to handle dropdown
-		file << "<script>function showErrors(fileName) { var errors = document.querySelectorAll('.errors'); errors.forEach(e => e.style.display = 'none'); if (fileName) { document.getElementById(fileName).style.display = 'block'; }}</script>";
-		file << "</body></html>";
-		file.close();
-		/*
-		*/
-	}
-
-
