@@ -5,10 +5,12 @@
 #define ___cs_requirements 1
 
 // check if __has_builtin is available
-#ifndef __has_builtin
-#	error "compiler does not support __has_builtin"
-#	undef ___cs_requirements
-#	define ___cs_requirements 0
+#ifndef ___cs_has_builtin
+#	ifndef __has_builtin
+#		define ___cs_has_builtin(_) 0
+#	else
+#		define ___cs_has_builtin(_) __has_builtin(_)
+#	endif
 #endif // __has_builtin
 
 // check cplusplus version
@@ -38,12 +40,12 @@
 	auto operator=(const _&) -> _& = delete
 
 #define ___cs_not_moveable(_) \
-	_(const _&&) = delete; \
-	auto operator=(const _&&) -> _& = delete
+	_(_&&) = delete; \
+	auto operator=(_&&) -> _& = delete
 
 #define ___cs_not_instantiable(_) \
-	_() = delete; \
-	~_() = delete; \
+	_(void) = delete; \
+	~_(void) = delete; \
 	___cs_not_copyable(_); \
 	___cs_not_moveable(_)
 
