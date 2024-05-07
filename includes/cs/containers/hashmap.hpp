@@ -8,7 +8,9 @@
 #include "cs/memory/malloc.hpp"
 #include "cs/type_traits/move.hpp"
 #include "cs/type_traits/forward.hpp"
+#include "cs/type_traits/declval.hpp"
 #include "cs/memory/lifecycle.hpp"
+#include "cs/string.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -16,18 +18,42 @@
 namespace cs {
 
 	/* hash */
-	template <typename ___type>
-	auto hash(const ___type& ___vl) noexcept -> cs::size_t {
+	inline auto hash_(const cs::string& ___vl) noexcept -> cs::size_t {
 		// jenkins one at a time hash
 		cs::size_t hash = 0U;
-		for (const auto& it : ___vl) {
-			hash += it;
-			hash += hash << 10;
-			hash ^= hash >> 6;
+
+		auto it = ___vl.data();
+		auto end = it + ___vl.size();
+
+
+		for (; it != end; ++it) {
+			hash += static_cast<unsigned char>(*it);
+			hash += hash << 10U;
+			hash ^= hash >> 6U;
 		}
-		hash += hash << 3;
-		hash ^= hash >> 11;
-		hash += hash << 15;
+		hash += hash << 3U;
+		hash ^= hash >> 11U;
+		hash += hash << 15U;
+		return hash;
+	}
+
+	/* hash */
+	inline auto hash_(const cs::string_view& ___vl) noexcept -> cs::size_t {
+		// jenkins one at a time hash
+		cs::size_t hash = 0U;
+
+		auto it = ___vl.data();
+		auto end = it + ___vl.size();
+
+
+		for (; it != end; ++it) {
+			hash += static_cast<unsigned char>(*it);
+			hash += hash << 10U;
+			hash ^= hash >> 6U;
+		}
+		hash += hash << 3U;
+		hash ^= hash >> 11U;
+		hash += hash << 15U;
 		return hash;
 	}
 
@@ -120,6 +146,29 @@ namespace cs {
 					/* deleted move assignment operator */
 					auto operator=(___node&&) -> ___node& = delete;
 
+
+					// -- public accessors ------------------------------------
+
+					/* hash */
+					auto hash(void) const noexcept -> size_type {
+						return _hash;
+					}
+
+					/* key */
+					auto key(void) const noexcept -> const key_type& {
+						return _key;
+					}
+
+					/* value */
+					auto value(void) noexcept -> mapped_type& {
+						return _value;
+					}
+
+					/* const value */
+					auto value(void) const noexcept -> const mapped_type& {
+						return _value;
+					}
+
 			}; // class ___node
 
 
@@ -158,7 +207,7 @@ namespace cs {
 
 			/* default constructor */
 			hashmap(void)
-			: _data{cs::calloc<pointer>(DEFAULT_SIZE)},
+			: _data{cs::calloc<___node*>(DEFAULT_SIZE)},
 			  _size{0U},
 			  _capacity{DEFAULT_SIZE} {
 			}
@@ -181,48 +230,74 @@ namespace cs {
 			template <typename... ___params>
 			auto insert(const key_type& ___ky, ___params&&... ___args) -> void {
 
-					// check if size is full
+				// check if size is full
 				if (_need_resize() == true)
 					_resize();
 
 				// hash key
-				const auto hash = cs::hash(___ky);
+				const auto hash = cs::hash_(___ky);
 				auto index = hash % _capacity;
-//
-//	// find empty slot
-//	for (size_type q = 1U; _data[index] != nullptr; ++q) {
-//
-//		// check hash and file exists
-//		if (_data[index]->hash() == hash
-//		 && _data[index]->entry().file() == file) {
-//			_data[index]->entry()._issues.push(cs::move(___iss));
-//			// clear file (move semantic responsibility)
-//			file.clear();
-//			return; }
-//
-//		// quadratic probing, todo: maybe check infinite loop
-//		index = (index + (q * q)) % _capacity;
-//
-//#ifdef CS_CORE_MAP_DEBUG
-//		++_nprobe;
-//#endif
-//	}
-//
-//	// allocate new node
-//	_data[index] = cs::malloc<___node>();
-//
-//	// construct node
-//	cs::lifecycle<___node>::construct(_data[index],
-//			hash,
-//			cs::move(file),
-//			cs::move(___iss));
-//
-//	// increment size
-//	++_size;
-//}
-//
-//				return true;
+
+				// find empty slot
+				for (size_type q = 1U; _data[index] != nullptr; ++q) {
+
+					// check hash and file exists
+					if (_data[index]->hash() == hash
+					 && _data[index]->key() == ___ky) {
+						// update value
+						//_data[index]->value() = mapped_type{cs::forward<___params>(___args)...};
+						return; }
+
+					// quadratic probing
+					index = (index + (q * q)) % _capacity;
+				}
+
+				// allocate new node
+				_data[index] = cs::malloc<___node>();
+
+				// construct node
+				cs::lifecycle<___node>::construct(_data[index],
+						hash, cs::forward<key_type>(___ky),
+							  cs::forward<___params>(___args)...);
+
+				// increment size
+				++_size;
 			}
+
+			/* for each */
+			template <typename ___fn, typename... ___params>
+			auto for_each(___fn&& ___fu, ___params&&... ___args)
+
+				// check noexcept function
+				noexcept(noexcept(___fu(cs::declval<key_type&>(),
+										cs::declval<mapped_type&>(),
+										cs::declval<___params>()...))) -> void {
+
+				// loop over data
+				for (size_type i = 0U; i < _capacity; ++i) {
+					// call if not null
+					if (_data[i] != nullptr)
+						___fu((_data[i])->key(),
+							  (_data[i])->value(),
+							   cs::forward<___params>(___args)...); }
+			}
+
+			/* const for each */
+			//template <typename ___fn, typename... ___params>
+			//auto for_each(___fn&& ___fu, ___params&&... ___args) const
+			//
+			//	// check noexcept function
+			//	noexcept(noexcept(___fu(
+			//					cs::declval<mapped_type>(),
+			//					cs::declval<___params>()...))) -> void {
+			//
+			//		// loop over data
+			//		for (size_type i = 0U; i < _capacity; ++i) {
+			//			// call if not null
+			//			if (_data[i] != nullptr)
+			//				___fu((_data[i])->entry(),
+			//						cs::forward<___params>(___args)...); }
+			//	}
 
 
 		private:
@@ -231,6 +306,39 @@ namespace cs {
 
 			/* resize */
 			auto _resize(void) {
+
+				// compute new capacity
+				const auto ___cp = (_capacity << 1U) + 1U; // odd
+
+				// allocate zeroed memory
+				auto ___new = cs::calloc<___node*>(___cp);
+
+				// re-hash map
+				for (size_type i = 0U; i < _capacity; ++i) {
+
+					if (_data[i] == nullptr)
+						continue;
+
+					// hash key
+					auto idx = _data[i]->hash() % ___cp;
+
+					// find empty slot
+					for (size_type q = 1U; ___new[idx] != nullptr; ++q) {
+						// quadratic probing
+						idx = (idx + (q * q)) % ___cp;
+					}
+
+					___new[idx] = _data[i];
+				}
+
+				// free old data
+				cs::free(_data);
+
+				// set new data
+				_data = ___new;
+
+				// set new capacity
+				_capacity = ___cp;
 			}
 
 			/* compute load factor */
