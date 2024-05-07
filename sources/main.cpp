@@ -63,7 +63,8 @@ int main(int ac, char** av) {
 		m.for_each([&](const cs::core::entry& e) {
 
 			std::cout << "\x1b[1;31m------------------- [\x1b[0m"
-		<< e.file() << "\x1b[1;31m] -------------------\x1b[0m\n\n";
+					  << e.file()
+					  << "\x1b[1;31m] -------------------\x1b[0m\n\n";
 
 			e.issues().for_each([](const cs::core::issue& i) {
 				i.print();
@@ -72,7 +73,7 @@ int main(int ac, char** av) {
 			std::cout << std::endl;
 		});
 
-		return 0;
+		//return 0;
 
 		//m.debug();
 
@@ -94,20 +95,16 @@ int main(int ac, char** av) {
 
 
 	}
+
 	catch (const cs::exception& e) {
 		std::cerr << e.what() << std::endl;
 		perror("error");
 	}
+
 	catch (...) {
 		std::cerr << "unknown error" << std::endl;
 		perror("error");
 	}
-
-
-
-
-
-
 
 	return 0;
 }
