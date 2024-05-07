@@ -1,6 +1,70 @@
 #include "cs/core/issue.hpp"
-
 #if ___cs_requirements
+
+
+// -- public accessors --------------------------------------------------------
+
+/* line */
+auto cs::core::issue::line(void) noexcept -> size_type& {
+	return _line;
+}
+
+/* const line */
+auto cs::core::issue::line(void) const noexcept -> const size_type& {
+	return _line;
+}
+
+/* column */
+auto cs::core::issue::column(void) noexcept -> size_type& {
+	return _column;
+}
+
+/* const column */
+auto cs::core::issue::column(void) const noexcept -> const size_type& {
+	return _column;
+}
+
+/* message */
+auto cs::core::issue::message(void) noexcept -> cs::string& {
+	return _message;
+}
+
+/* const message */
+auto cs::core::issue::message(void) const noexcept -> const cs::string& {
+	return _message;
+}
+
+/* snippet */
+auto cs::core::issue::snippet(void) noexcept -> cs::string& {
+	return _snippet;
+}
+
+/* const snippet */
+auto cs::core::issue::snippet(void) const noexcept -> const cs::string& {
+	return _snippet;
+}
+
+
+// -- public modifiers --------------------------------------------------------
+
+/* clear */
+auto cs::core::issue::clear(void) noexcept -> void {
+	_line = 0U;
+	_column = 0U;
+	_message.clear();
+	_snippet.clear();
+}
+
+
+// -- public methods ----------------------------------------------------------
+
+/* print */
+auto cs::core::issue::print(void) const noexcept -> void {
+	std::cout << "\x1b[32m   line [\x1b[0m" << _line << "\x1b[32m]\x1b[0m" << std::endl;
+	std::cout << "\x1b[32m column [\x1b[0m" << _column << "\x1b[32m]\x1b[0m" << std::endl;
+	std::cout << "\x1b[32mmessage [\x1b[0m" << _message << "\x1b[32m]\x1b[0m" << std::endl;
+}
+
 
 
 // -- public lifecycle --------------------------------------------------------
