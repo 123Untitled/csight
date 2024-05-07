@@ -30,6 +30,7 @@
 #include "cs/system/cwd.hpp"
 #include "cs/utility/hash.hpp"
 #include <signal.h>
+#include "cs/containers/hashmap.hpp"
 
 // signal handler
 void signal_handler(int sig) {
@@ -40,6 +41,50 @@ void signal_handler(int sig) {
 #if ___cs_requirements
 int main(int ac, char** av) {
 
+	cs::hashmap<cs::string, cs::string> ___lst;
+
+	cs::string_view k[] = {
+		cs::string_view{"one"},
+		cs::string_view{"two"},
+		cs::string_view{"three"},
+		cs::string_view{"four"},
+		cs::string_view{"five"},
+		cs::string_view{"six"},
+		cs::string_view{"seven"},
+		cs::string_view{"eight"},
+		cs::string_view{"nine"},
+		cs::string_view{"ten"}
+	};
+
+	cs::string_view v[] = {
+		cs::string_view{"1"},
+		cs::string_view{"2"},
+		cs::string_view{"3"},
+		cs::string_view{"4"},
+		cs::string_view{"5"},
+		cs::string_view{"6"},
+		cs::string_view{"7"},
+		cs::string_view{"8"},
+		cs::string_view{"9"},
+		cs::string_view{"10"}
+	};
+
+
+	cs::string a, b, c, d;
+
+	a.append("one");
+	b.append("two");
+	c.append("three");
+	d.append("four");
+
+
+	___lst.insert(a, b);
+
+	//___lst.for_each([](const cs::string_view& k, const cs::string_view& v) {
+	//	std::cout << k << " -> " << v << std::endl;
+	//});
+
+	return 0;
 
 
 	// signal handler
