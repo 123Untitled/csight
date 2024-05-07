@@ -88,6 +88,9 @@ override PCHS := $(HDRS:%.hpp=%.pch)
 # include directories
 override INCS := $(shell find $(INC_DIR) -mindepth 1 -type d)
 
+# log files
+override LOGS := $(OBJS:%.o=%.log)
+
 
 # -- T O O L S ----------------------------------------------------------------
 
@@ -102,6 +105,8 @@ override RM := rm -vfr
 
 # compiler
 override CXX := $(shell which clang++)
+#override CXX := /opt/homebrew/Cellar/llvm/18.1.4/bin/clang++
+#override CXX := /opt/homebrew/Cellar/gcc/13.2.0/bin/g++-13
 
 # compiler standard
 override STD := -std=c++2a
@@ -113,17 +118,41 @@ override OPT := -O0
 override DBG := -g3
 
 # compiler flags
-override FLAGS := -Wall -Wextra -Werror -Wpedantic -Weffc++ -Winline \
+override FLAGS := -Wall -Wextra -Werror \
+				  -Wpedantic -Weffc++ -Winline \
 				  -Wno-unused -Wno-unused-variable -Wno-unused-parameter \
 				  -Wconversion -Wsign-conversion -Wfloat-conversion -Wnarrowing \
 				  -Wshadow \
-				  -fno-rtti
+				  -fno-rtti \
+				  -fdiagnostics-color=always
+
+
+
+#-fdiagnostics-absolute-paths           -- print absolute paths in diagnostics
+#-fdiagnostics-color                    -- colorize diagnostics
+#-fdiagnostics-fixit-info               -- supply fixit into with diagnostic messages
+#-fdiagnostics-format                   -- diagnostics format
+#-fdiagnostics-generate-patch           -- print fix-it hints to stderr in unified diff format
+#-fdiagnostics-hotness-threshold        -- prevent optimization remarks from being output if they do not meet threshold
+#-fdiagnostics-parseable-fixits         -- print fixit hints in machine-readable form
+#-fdiagnostics-print-source-range-info  -- print source range spans in numeric form
+#-fdiagnostics-show-caret               -- show the source line with a caret indicating the column
+#-fdiagnostics-show-category            -- diagnostics show category
+#-fdiagnostics-show-hotness             -- enable profile hotness information in diagnostic line
+#-fdiagnostics-show-location            -- how often to emit source location at the beginning of line-wrapped diagnostics
+#-fdiagnostics-show-note-include-stack  -- display include stacks for diagnostic notes
+#-fdiagnostics-show-option              -- amend appropriate diagnostic messages with the command line option that controls them
+#-fdiagnostics-show-template-tree       -- print a template comparison tree for differing templates
+
+#-fno-elide-type -fdiagnostics-show-template-tree
+
+
+#-Wfatal-errors 
+
+#-Werror \
 
 # cxx flags
-override CXXFLAGS := $(STD) $(DBG) $(OPT) $(FLAGS)
-
-# includes
-override INCLUDES := -I$(INC_DIR)
+override CXXFLAGS := $(STD) $(DBG) $(OPT) $(FLAGS) -I$(INC_DIR)
 
 # pch include
 override PCH_INCLUDES := $(addprefix -include-pch ,$(PCHS))
@@ -133,6 +162,12 @@ override LDFLAGS ?=
 
 # dependency flags
 override DEPFLAGS = -MT $@ -MMD -MP -MF $*.d
+
+# number of compiled files
+NSRC := 0
+
+# number of compiled headers
+NHDR := 0
 
 
 # -- P H O N Y ----------------------------------------------------------------
@@ -148,19 +183,24 @@ override DEPFLAGS = -MT $@ -MMD -MP -MF $*.d
 
 all: ascii $(COMPILE_DB) .WAIT $(EXEC)
 	echo '[done]\n'
+	echo '\033[35m'$(NHDR) 'headers precompiled\033[0m'
+	echo '\033[32m'$(NSRC) 'sources compiled\033[0m'
+	echo
 
 $(EXEC): $(OBJS)
-	echo '\033[32mexe\033[0m' $@'\n'
+	echo '\n\033[32mexe\033[0m' $@'\n'
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 -include $(DEPS)
 %.o: %.cpp Makefile | $(PCHS)
-	echo '\033[33mobj\033[0m' $(*F)
-	$(CXX) -c $< -o $@ $(CXXFLAGS) $(PCH_INCLUDES) $(INCLUDES) $(DEPFLAGS)
+	echo '\033[33mobj\033[0m' $@
+	$(CXX) -c $< -o $@ $(PCH_INCLUDES) $(CXXFLAGS) $(DEPFLAGS)
+	$(eval NSRC := $(shell echo $$(($(NSRC) + 1))))
 
 %.pch: %.hpp Makefile
-	echo '\033[35mpch\033[0m' $(*F)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -x c++-header $< -o $@
+	echo '\033[35mpch\033[0m' $@
+	$(CXX) $(CXXFLAGS) -x c++-header $< -o $@
+	$(eval NHDR := $(shell echo $$(($(NHDR) + 1))))
 
 $(COMPILE_DB): $(SRCS) Makefile
 	echo '\033[34mcdb\033[0m' $@
@@ -174,13 +214,26 @@ fclean: clean
 re: fclean all
 
 ascii:
-	echo '\033[32m'\
-		'                   _ _            _     _   _   \n'\
-		' ___ ___ _____ ___|_| |___    ___|_|___| |_| |_ \n'\
-		'|  _| . |     | . | | | -_|  |_ -| | . |   |  _|\n'\
-		'|___|___|_|_|_|  _|_|_|___|  |___|_|_  |_|_|_|  \n'\
-		'              |_|                  |___|        \n'\
+	echo '\033[32m\n'\
+		' ▄████▄   ▒█████   ███▄ ▄███▓ ██▓███   ██▓ ██▓    ▓█████      ██████  ██▓  ▄████  ██░ ██ ▄▄▄█████▓\n'\
+		'▒██▀ ▀█  ▒██▒  ██▒▓██▒▀█▀ ██▒▓██░  ██▒▓██▒▓██▒    ▓█   ▀    ▒██    ▒ ▓██▒ ██▒ ▀█▒▓██░ ██▒▓  ██▒ ▓▒\n'\
+		'▒▓█    ▄ ▒██░  ██▒▓██    ▓██░▓██░ ██▓▒▒██▒▒██░    ▒███      ░ ▓██▄   ▒██▒▒██░▄▄▄░▒██▀▀██░▒ ▓██░ ▒░\n'\
+		'▒▓▓▄ ▄██▒▒██   ██░▒██    ▒██ ▒██▄█▓▒ ▒░██░▒██░    ▒▓█  ▄      ▒   ██▒░██░░▓█  ██▓░▓█ ░██ ░ ▓██▓ ░ \n'\
+		'▒ ▓███▀ ░░ ████▓▒░▒██▒   ░██▒▒██▒ ░  ░░██░░██████▒░▒████▒   ▒██████▒▒░██░░▒▓███▀▒░▓█▒░██▓  ▒██▒ ░ \n'\
+		'░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒░   ░  ░▒▓▒░ ░  ░░▓  ░ ▒░▓  ░░░ ▒░ ░   ▒ ▒▓▒ ▒ ░░▓   ░▒   ▒  ▒ ░░▒░▒  ▒ ░░   \n'\
+		'  ░  ▒     ░ ▒ ▒░ ░  ░      ░░▒ ░      ▒ ░░ ░ ▒  ░ ░ ░  ░   ░ ░▒  ░ ░ ▒ ░  ░   ░  ▒ ░▒░ ░    ░    \n'\
+		'░        ░ ░ ░ ▒  ░      ░   ░░        ▒ ░  ░ ░      ░      ░  ░  ░   ▒ ░░ ░   ░  ░  ░░ ░  ░      \n'\
+		'░ ░          ░ ░         ░             ░      ░  ░   ░  ░         ░   ░        ░  ░  ░  ░         \n'\
+		'░                                                                                                 \n'\
 		'\033[0m'
+
+	#echo '\033[32m'\
+	#	'                   _ _            _     _   _   \n'\
+	#	' ___ ___ _____ ___|_| |___    ___|_|___| |_| |_ \n'\
+	#	'|  _| . |     | . | | | -_|  |_ -| | . |   |  _|\n'\
+	#	'|___|___|_|_|_|  _|_|_|___|  |___|_|_  |_|_|_|  \n'\
+	#	'              |_|                  |___|        \n'\
+	#	'\033[0m'
 
 
 
