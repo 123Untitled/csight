@@ -29,9 +29,31 @@
 
 #include "cs/system/cwd.hpp"
 #include "cs/utility/hash.hpp"
+#include <signal.h>
+
+// signal handler
+void signal_handler(int sig) {
+	cs::dispatch::stop();
+	std::cout << "\x1b[1;31m\n\nSIGINT received\n\n\x1b[0m" << std::endl;
+}
 
 #if ___cs_requirements
 int main(int ac, char** av) {
+
+
+	// signal handler
+	if (signal(SIGINT, signal_handler) == SIG_ERR) {
+		perror("signal");
+		return 1;
+	}
+	if (signal(SIGTERM, signal_handler) == SIG_ERR) {
+		perror("signal");
+		return 1;
+	}
+	if (signal(SIGQUIT, signal_handler) == SIG_ERR) {
+		perror("signal");
+		return 1;
+	}
 
 
 	try {
