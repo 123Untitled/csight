@@ -2,7 +2,7 @@
 # -- I G N O R E D  F I L E S -------------------------------------------------
 
 # ignore executables
-/exec*
+/csight
 
 # ignore object files
 /sources/**/*.o
