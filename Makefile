@@ -47,7 +47,7 @@ override MAKEFLAGS += --warn-undefined-variables --no-builtin-rules \
 # -- T A R G E T S ------------------------------------------------------------
 
 # project name
-override PROJECT := compile_sight
+override PROJECT := csight
 
 # main executable
 override EXEC := exec_$(PROJECT)
