@@ -8,8 +8,10 @@
 		<title>compile sight</title>
 		<!-- css file -->
 		<link rel="stylesheet" href="style.css">
-		<!-- json data -->
-		<script src="issues2.json" type="application/json"></script>
+
+		<!--<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/base16/windows-nt-light.min.css">-->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
 	</head>
 	<body>
 
@@ -18,143 +20,127 @@
 			<div id="container"></div>
 		</div>
 
+
 		<script>
 
+			// fetch the issues data
+			fetch('/issues.json')
+				.then(response => {
+					if (!response.ok) {
+						throw new Error('Network response was not ok');
+					}
+					return response.json();
+				})
+				.then(data => {
 
-			const issues_data = {
-				"files": [
-					{
-						"filename": "./inc/containers/variant.hpp",
-						"errors": [
-							{
-								"line": 418,
-								"column": 65,
-								"message": " note: in instantiation of template type alias 'indexed_element' requested here"
-							},
-							{
-								"line": 430,
-								"column": 3,
-								"message": " error: static_assert failed due to requirement '3UL < sizeof...(T)' \"): VARIANT: INDEX OUT OF BOUNDS :(\""
-							},
-							{
-								"line": 433,
-								"column": 64,
-								"message": " note: in instantiation of template type alias 'type_at' requested here"
-							},
-						]
-					},
-					{
-						"filename": "./inc/indexed_element.hpp",
-						"errors": [
-							{
-								"line": 50,
-								"column": 22,
-								"message": " note: in instantiation of template type alias 'type_at' requested here"
-							},
-							{
-								"line": 56,
-								"column": 2,
-								"message": " note: in instantiation of template class 'xns::impl::indexed_element<3, xns::variant<X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>>' requested here"
-							},
-						]
-					},
-					{
-						"filename": "./inc/meta/type_at.hpp",
-						"errors": [
-							{
-								"line": 27,
-								"column": 4,
-								"message": " error: static_assert failed due to requirement '3UL < sizeof...(A)' \"TYPE_AT: INDEX OUT OF RANGE!\""
-							},
-							{
-								"line": 65,
-								"column": 2,
-								"message": " note: in instantiation of template class 'xns::impl::type_at<3, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
-							},
-							{
-								"line": 65,
-								"column": 2,
-								"message": " error: no type named 'type' in 'xns::impl::type_at<3, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>'"
-							},
-						]
-					},
-					{
-						"filename": "test/src/variant_tests.cpp",
-						"errors": [
-							{
-								"line": 85,
-								"column": 11,
-								"message": " note: while substituting deduced template arguments into function template 'get' [with I = 3, T = <X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>]"
-							},
-							{
-								"line": 85,
-								"column": 16,
-								"message": " note: in instantiation of function template specialization 'xns::get<3UL, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
-							},
-							{
-								"line": 85,
-								"column": 16,
-								"message": " note: in instantiation of function template specialization 'xns::get<3UL, X<char, {\"C\"}, {\"char\"}>, X<bool, {\"B\"}, {\"bool\"}>, X<double, {\"D\"}, {\"double\"}>>' requested here"
-							},
-						]
-					},
-				]
-			}
+					// parse json data
+					//data = JSON.parse(ddata);
 
-			// function to escape special characters
 
-			const container = document.getElementById('container');
 
-			issues_data.files.forEach(file => {
 
-				const wrap = document.createElement('div');
-				wrap.classList.add('wrap');
+					// get the container
+					const container = document.getElementById('container');
 
-				const label = document.createElement('label');
-				label.innerHTML = `<div>${file.filename}</div>`;
-				wrap.appendChild(label);
+					// loop over the files
+					data.files.forEach(file => {
 
-				const content = document.createElement('div');
-				content.classList.add('content');
-				file.errors.forEach(error => {
-					// use google code prettify
-					//content.innerHTML += `<pre class="prettyprint" lang="cpp">${error.message}</pre>`;
-					content.innerHTML += `<div>${error.message}</div>`;
-					});
-					wrap.appendChild(content);
 
-					container.appendChild(wrap);
+						// create a wrap
+						const wrap = document.createElement('div');
+						wrap.classList.add('wrap');
 
-					});
+						// create a label
+						const label = document.createElement('label');
 
-				document.addEventListener("DOMContentLoaded", function() {
+						const div = document.createElement('div');
+						div.textContent = file.file;
+						label.appendChild(div);
 
-					var   labels = document.querySelectorAll('.wrapper label');
-					var contents = document.querySelectorAll('.wrapper .content');
+						wrap.appendChild(label);
 
-					labels.forEach(function(label) {
+						// create a content
+						const content = document.createElement('div');
+						content.classList.add('content');
 
+						// loop over issues
+						file.issues.forEach(issue => {
+
+							const pre_element = document.createElement('pre');
+							const code_element = document.createElement('code');
+							code_element.className = 'cpp';  // Classe pour C++
+
+							//const div = document.createElement('div');
+							code_element.textContent = issue.message;
+
+							pre_element.appendChild(code_element);
+
+
+							content.appendChild(pre_element);
+
+							// highlight the code
+							hljs.highlightBlock(code_element);
+						});
+
+						wrap.appendChild(content);
+
+						// append the wrap to the container
+						container.appendChild(wrap);
+
+
+						// Attach event listener to label for mouseenter
 						label.addEventListener('mouseenter', function() {
-
-							// close all contents
-							contents.forEach(function(content) {
-								content.style.maxHeight = null;
+							// Close all contents
+							document.querySelectorAll('.wrapper .content').forEach(function(cont) {
+								cont.style.maxHeight = null;
 							});
 
-							// open the hovered content
-							var content = label.nextElementSibling;
-							if (content.style.maxHeight) {
-								content.style.maxHeight = null;
+							// Open this content
+							var cont = label.nextElementSibling;
+							if (cont.style.maxHeight) {
+								cont.style.maxHeight = null;
+							} else {
+								cont.style.maxHeight = cont.scrollHeight + "px";
 							}
-							else {
-								content.style.maxHeight = content.scrollHeight + "px";
-							}
+						});
 
-						}); // label.addEventListener
 
-					}); // labels.forEach
 
-				}); // DOMContentLoaded
+					});
+
+				})
+				.catch(error => {
+					console.error('There has been a problem with your fetch operation:', error);
+				});
+
+				//document.addEventListener("DOMContentLoaded", function() {
+				//
+				//	var   labels = document.querySelectorAll('.wrapper label');
+				//	var contents = document.querySelectorAll('.wrapper .content');
+				//
+				//	labels.forEach(function(label) {
+				//
+				//		label.addEventListener('mouseenter', function() {
+				//
+				//			// close all contents
+				//			contents.forEach(function(content) {
+				//				content.style.maxHeight = null;
+				//			});
+				//
+				//			// open the hovered content
+				//			var content = label.nextElementSibling;
+				//			if (content.style.maxHeight) {
+				//				content.style.maxHeight = null;
+				//			}
+				//			else {
+				//				content.style.maxHeight = content.scrollHeight + "px";
+				//			}
+				//
+				//		}); // label.addEventListener
+				//
+				//	}); // labels.forEach
+				//
+				//}); // DOMContentLoaded
 
 
 

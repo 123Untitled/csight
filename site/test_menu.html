@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+
+		<meta charset="UTF-8">
+		<title>Menu Défilant</title>
+
+		<style>
+
+			/* all */
+			* {
+				margin: 0;
+				padding: 0;
+				font-family: MonoSpace;
+				/*font-size: 1.5em;*/
+			}
+
+
+			.menu-container {
+				position: fixed;
+
+				/* center the menu horizontally */
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+
+				/* width */
+				width: 30%;
+				/* height */
+				height: 75%;
+
+				/*padding: 10px;*/
+
+				overflow: hidden;
+
+				border: 1px solid green; /* Pour voir les limites du conteneur */
+				/* rounded corners */
+				border-radius: 10px;
+			}
+
+			#menu {
+				/* padding */
+				/*border: 1px solid green; /* Pour voir les limites du conteneur */*/
+				overflow: hidden;
+				/* add style-list elements */
+				list-style: none;
+				padding: 0;
+				margin: 10px;
+
+				/* height (get the height of the container + 1) */
+				height: calc(100% + 100px);
+			}
+
+			#menu li {
+				padding: 0 20px;
+				height: 50px; /* Hauteur des éléments de liste pour un meilleur contrôle */
+				line-height: 50px;
+				border-bottom: 1px solid #ccc;
+			}
+
+			/* hover effect */
+			#menu li:hover {
+				background-color: #f9f9f9;
+			}
+
+		</style>
+
+	</head>
+	<body>
+
+		<div id="menuContainer" class="menu-container">
+			<ul id="menu">
+				<li>Élément 1</li>
+				<li>Élément 2</li>
+				<li>Élément 3</li>
+				<li>Élément 4</li>
+				<li>Élément 5</li>
+				<li>Élément 6</li>
+				<li>Élément 7</li>
+				<li>Élément 8</li>
+				<li>Élément 9</li>
+				<li>Élément 10</li>
+				<li>Élément 11</li>
+				<li>Élément 12</li>
+				<li>Élément 13</li>
+				<li>Élément 14</li>
+				<li>Élément 15</li>
+				<li>Élément 1</li>
+				<li>Élément 2</li>
+				<li>Élément 3</li>
+				<li>Élément 4</li>
+				<li>Élément 5</li>
+				<li>Élément 6</li>
+				<li>Élément 7</li>
+				<li>Élément 1</li>
+				<li>Élément 1</li>
+				<li>Élément 2</li>
+				<li>Élément 3</li>
+				<li>Élément 4</li>
+				<li>Élément 5</li>
+				<li>Élément 6</li>
+				<li>Élément 7</li>
+				<li>Élément 8</li>
+				<li>Élément 9</li>
+				<li>Élément 10</li>
+				<li>Élément 11</li>
+				<li>Élément 12</li>
+				<li>Élément 13</li>
+				<li>Élément 14</li>
+				<li>Élément 15</li>
+				<li>Élément 2</li>
+				<li>Élément 3</li>
+				<li>Élément 4</li>
+				<li>Élément 5</li>
+				<li>Élément 6</li>
+				<li>Élément 7</li>
+				<li>Élément 8</li>
+				<li>Élément 9</li>
+				<li>Élément 10</li>
+				<li>Élément 11</li>
+				<li>Élément 12</li>
+				<li>Élément 13</li>
+				<li>Élément 14</li>
+				<li>Élément 15</li>
+				<li>Élément 1</li>
+				<li>Élément 2</li>
+				<li>Élément 3</li>
+				<li>Élément 4</li>
+				<li>Élément 5</li>
+				<li>Élément 6</li>
+				<li>Élément 7</li>
+				<li>Élément 8</li>
+				<li>Élément 9</li>
+				<li>Élément 10</li>
+				<li>Élément 11</li>
+				<li>Élément 12</li>
+				<li>Élément 13</li>
+				<li>Élément 14</li>
+				<li>Élément 15</li>
+				<li>Élément 8</li>
+				<li>Élément 9</li>
+				<li>Élément 10</li>
+				<li>Élément 11</li>
+				<li>Élément 12</li>
+				<li>Élément 13</li>
+				<li>Élément 14</li>
+				<li>Élément 15</li>
+			</ul>
+		</div>
+
+		<script>
+			<!--const menu = document.getElementById('menu');-->
+			<!--const menuContainer = document.getElementById('menuContainer');-->
+			<!---->
+			<!--menuContainer.addEventListener('mousemove', function(e) {-->
+			<!--	// print log of mouse position-->
+			<!--	//console.log(e.clientY);-->
+			<!--	const bounds = menuContainer.getBoundingClientRect();-->
+			<!--	const y = e.clientY - bounds.top;-->
+			<!--	const height = bounds.height;-->
+			<!--	const delta = ((y / height) - 0.5) * 20;  // Ajusté pour être plus sensible-->
+			<!---->
+			<!--	menu.scrollTop += delta;  // Modifiez la vitesse ici-->
+			<!---->
+			<!--	console.log("Delta:", delta);  // Afficher la valeur de delta pour le débogage-->
+			<!--	console.log("Current ScrollTop:", menu.scrollTop);-->
+			<!---->
+			<!--});-->
+
+
+			const menu = document.getElementById('menu');
+			const menuContainer = document.getElementById('menuContainer');
+			let scrollInterval = null;
+
+
+			function updateScroll(e) {
+				const bounds = menuContainer.getBoundingClientRect();
+				const y = e.clientY - bounds.top;
+				const height = bounds.height;
+
+				// Calcul du delta avec une fonction quadratique pour augmenter la vitesse vers les extrémités
+				const midPoint = height / 2;
+				const distanceFromMid = y - midPoint;
+				const normalizedDistance = distanceFromMid / midPoint;  // Normalise entre -1 et 1
+				delta = normalizedDistance * Math.abs(normalizedDistance) * height * 0.05;
+
+				if (delta > 0.0 && delta < 1) {
+					delta = 1;
+				}
+
+				// Mettre à jour le défilement
+				menu.scrollTop += delta;
+
+				console.log('delta[', delta, ']');
+
+			}
+
+			function startScrolling(e) {
+				if (scrollInterval !== null) {
+					clearInterval(scrollInterval);  // S'assurer qu'on ne double pas l'interval
+				}
+				scrollInterval = setInterval(() => updateScroll(e), 5);  // Mettez à jour toutes les 20 ms
+			}
+
+			function stopScrolling() {
+				if (scrollInterval !== null) {
+					clearInterval(scrollInterval);
+					scrollInterval = null;
+				}
+			}
+
+			menuContainer.addEventListener('mouseenter', startScrolling);
+			menuContainer.addEventListener('mousemove', startScrolling);  // Pour mettre à jour e si la souris bouge
+			menuContainer.addEventListener('mouseleave', stopScrolling);
+		</script>
+
+
+	</body>
+</html>
+

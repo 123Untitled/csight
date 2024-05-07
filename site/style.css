@@ -17,15 +17,15 @@
 }
 
 body {
-	overflow: hidden;
-	background-color:#99ffca;
-	background-image:
-	radial-gradient(at 33% 29%, hsla(274,100%,54%,1) 0px, transparent 50%),
-	radial-gradient(at 67% 61%, hsla(211,100%,54%,1) 0px, transparent 50%);
-	/* 100% height */
-	height: 100vh;
-	/* 100% width */
-	width: 100vw;
+	/*overflow: hidden;*/
+	/*background-color:#99ffca;*/
+	/*background-image:*/
+	/*radial-gradient(at 33% 29%, hsla(274,100%,54%,1) 0px, transparent 50%),*/
+	/*radial-gradient(at 67% 61%, hsla(211,100%,54%,1) 0px, transparent 50%);*/
+	/*/* 100% height */*/
+	/*height: 100vh;*/
+	/*/* 100% width */*/
+	/*width: 100vw;*/
 }
 
 .wrapper {
@@ -143,66 +143,101 @@ label div:first-child {
 }
 
 
+/* Highlight.js */
 
 
-/* Doxy pretty-printing styles. Used with prettify.js.  */
-
-pre .str, code .str { color: #fec243; font-style: italic; } /* string  - eggyolk gold */
-pre .kwd, code .kwd { color: #8470FF; } /* keyword - light slate blue */
-pre .com, code .com { color: #32cd32; font-style: italic; } /* comment - green */
-pre .typ, code .typ { color: #6ecbcc; } /* type - turq green */
-pre .lit, code .lit { color: #d06; } /* literal - cherry red */
-pre .pun, code .pun { color: #8B8970;  } /* punctuation - lemon chiffon4  */
-pre .pln, code .pln { color: #f0f0f0; } /* plaintext - white */
-pre .tag, code .tag { color: #9c9cff; } /* html/xml tag  (bluey)  */
-pre .htm, code .htm { color: #dda0dd; } /* html tag  light purply*/
-pre .xsl, code .xsl { color: #d0a0d0; } /* xslt tag  light purply*/
-pre .atn, code .atn { color: #46eeee; font-weight: normal;} /* html/xml attribute name  - lt turquoise */
-pre .atv, code .atv { color: #EEB4B4; } /* html/xml attribute value - rosy brown2 */
-pre .dec, code .dec { color: #3387CC; } /* decimal - blue */
-
-a {
-	text-decoration: none;
+.hljs {
+	background: #241E26;
+	color: #B1A6C3;
 }
 
-pre.prettyprint, code.prettyprint {
-	font-family: 'Space Mono', monospace;
-	font-size: 9pt;
-	/* no border */
+/* Gray DOCTYPE selectors like WebKit */
+.xml .hljs-meta {
+	color: #c0c0c0;
 }
 
-pre.prettyprint {
-	border: none;
-	/*width: 95%;*/
-	/*margin: 1em auto;*/
-	/*padding: 1em;*/
-	/*white-space: pre-wrap;*/
+.hljs-comment,
+.hljs-quote {
+	color: #3F6E74;
 }
 
-pre.prettyprint a, code.prettyprint a {
-	text-decoration:none;
-	border : none;
+.hljs-tag,
+.hljs-attribute,
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-name {
+	color: #aa0d91;
 }
 
-/* Specify class=linenums on a pre to get line numbering; line numbers themselves are the same color as punctuation */
-/*ol.linenums { margin-top: 0; margin-bottom: 0; color: #8B8970; } /* IE indents via margin-left */*/
-/*li.L0,li.L1,li.L2,li.L3,li.L5,li.L6,li.L7,li.L8 { list-style-type: none }*/
-/*/* Alternate shading for lines */*/
-/*li.L1,li.L3,li.L5,li.L7,li.L9 { }*/
+.hljs-variable,
+.hljs-template-variable {
+	color: #3F6E74;
+}
 
-/* print is mostly unchanged from default at present  */
-/*@media print {*/
-/*	pre.prettyprint, code.prettyprint { background-color: #fff;  }*/
-/*	pre .str, code .str { color: #088; }*/
-/*	pre .kwd, code .kwd { color: #006; font-weight: bold; }*/
-/*	pre .com, code .com { color: #0c3; font-style: italic; }*/
-/*	pre .typ, code .typ { color: #404; font-weight: bold; }*/
-/*	pre .lit, code .lit { color: #044; }*/
-/*	pre .pun, code .pun { color: #440; }*/
-/*	pre .pln, code .pln { color: #000; }*/
-/*	pre .tag, code .tag { color: #b66ff7; font-weight: bold; }*/
-/*	pre .htm, code .htm { color: #606; font-weight: bold; }*/
-/*	pre .xsl, code .xsl { color: #606; font-weight: bold; }*/
-/*	pre .atn, code .atn { color: #c71585;  font-weight: normal; }*/
-/*	pre .atv, code .atv { color: #088;  font-weight: normal; }*/
-/*}*/
+.hljs-code,
+.hljs-string,
+.hljs-meta .hljs-string {
+	color: #829;
+}
+
+.hljs-regexp,
+.hljs-link {
+	color: #0E0EFF;
+}
+
+.hljs-title,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-number {
+	color: #1c00cf;
+}
+
+.hljs-section,
+.hljs-meta {
+	color: #643820;
+}
+
+
+.hljs-title.class_,
+.hljs-class .hljs-title,
+.hljs-type,
+.hljs-built_in,
+.hljs-params {
+	color: #5c2699;
+}
+
+.hljs-attr {
+	color: #836C28;
+}
+
+.hljs-subst {
+	color: #000;
+}
+
+.hljs-formula {
+	background-color: #eee;
+	font-style: italic;
+}
+
+.hljs-addition {
+	background-color: #baeeba;
+}
+
+.hljs-deletion {
+	background-color: #ffc8bd;
+}
+
+.hljs-selector-id,
+.hljs-selector-class {
+	color: #9b703f;
+}
+
+.hljs-doctag,
+.hljs-strong {
+	font-weight: bold;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
