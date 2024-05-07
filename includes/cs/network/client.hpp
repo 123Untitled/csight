@@ -6,6 +6,8 @@
 
 #include "cs/network/socket.hpp"
 #include "cs/io_event.hpp"
+#include "cs/http/parser.hpp"
+#include "cs/http/request.hpp"
 
 
 #include <string>
@@ -27,11 +29,28 @@ namespace cs {
 			/* self type */
 			using ___self = cs::client;
 
+			/* size type */
+			using ___size = cs::size_t;
+
+
+			// -- private constants -------------------------------------------
+
+			/* buffer size */
+			enum : ___size {
+				BUFFER_SIZE = 1024
+			};
+
 
 			// -- private members ---------------------------------------------
 
 			/* socket */
 			cs::socket _socket;
+
+			/* parser */
+			cs::http::parser _parser;
+
+			/* request */
+			cs::http::request _request;
 
 
 		public:
@@ -77,7 +96,11 @@ namespace cs {
 
 		private:
 
+
 			// -- private methods ---------------------------------------------
+
+			/* receive */
+			auto _receive(char (&)[BUFFER_SIZE]) -> ___size;
 
 			/* serve file */
 			auto serve_file(const std::string&,
