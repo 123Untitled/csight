@@ -45,7 +45,7 @@ namespace cs {
 			std::is_class<Derived>::value &&
 			*/
 			decltype(cs::___impl::___test_is_base_of<___base, ___derived>(0))::value
-			> {};
+			>::value;
 
 
 } // namespace cs
