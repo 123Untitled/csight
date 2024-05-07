@@ -61,7 +61,7 @@ namespace cs {
 	auto realloc(___type* ___ptr, const cs::size_t ___sz) -> ___type* {
 
 		#if defined(CS_USE_SYSTEM_MALLOC)
-			void* ptr = ::realloc(___ptr, ___sz * sizeof(___type)));
+			void* ptr = ::realloc(___ptr, ___sz * sizeof(___type));
 		#else
 			void* ptr = __builtin_realloc(___ptr, ___sz * sizeof(___type));
 		#endif
