@@ -1,7 +1,8 @@
 #include "cs/network/client.hpp"
 #include "cs/network/dispatch.hpp"
 #include "cs/type_traits/move.hpp"
-#include "cs/diagnostics/exception.hpp"
+#include "cs/hint.hpp"
+#include "cs/reader.hpp"
 
 #include <iostream>
 #include <string>
@@ -19,56 +20,13 @@ auto read_file(const std::string& path) -> std::string {
 	return "";
 }
 
-const char _index_html[] {
-R"(
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>Compilation Errors</title>
-	<style>
-		body {
-			font-family: Arial, sans-serif;
-		}
-		.error {
-			margin-bottom: 20px;
-		}
-		.menu {
-			background: #f0f0f0;
-			padding: 10px;
-		}
-		select {
-			padding: 5px;
-			margin-right: 10px;
-		}
-		pre {
-			background-color: #eeeeee;
-			padding: 10px;
-		}
-	</style>
+//static constexpr const char* files[] {
+//	"/",
+//	"/style.css",
+//	"/issues.json",
+//};
 
-</head>
-<body>
-	<h1>Compilation Errors</h1>
-	<div class="menu">
-		<label for="fileSelect">Choose a file:</label>
-		<select id="fileSelect" onchange="showErrors(this.value);">
-			<option value="">Select a file</option>
-		</select>
-	</div>
-	<script>
-		function showErrors(fileName) {
-			var errors = document.querySelectorAll('.errors');
-			errors.forEach(e => e.style.display = 'none');
-			if (fileName) {
-				document.getElementById(fileName).style.display = 'block';
-			}
-		}
-	</script>
-</body>
-</html>
-)"
-};
+
 
 // tmp: to be implemented in another file
 auto cs::client::serve_file(const std::string& path,
@@ -76,8 +34,11 @@ auto cs::client::serve_file(const std::string& path,
 
 	std::string content = read_file(path);
 
-	if (content.empty())
+
+	if (content.empty()) {
+		std::cout << "404 Not Found" << std::endl;
 		content = "HTTP/1.1 404 Not Found\n\n404 Not Found";
+	}
 
 	else {
 		std::stringstream response;
@@ -98,56 +59,7 @@ auto cs::client::serve_file(const std::string& path,
 	::write(_socket, content.data(), content.size());
 }
 
-auto cs::client::serve_index(void) -> void {
 
-	std::string content = _index_html;
-
-	if (content.empty())
-		content = "HTTP/1.1 404 Not Found\n\n404 Not Found";
-
-	else {
-		std::stringstream response;
-		// 200 OK
-		response << "HTTP/1.1 200 OK\n";
-		// Content-Type
-		response << "Content-Type: " << "text/html" << "\n";
-		// cache-control
-		response << "Cache-Control: no-cache, no-store, must-revalidate\n";
-		// Content-Length
-		response << "Content-Length: " << content.size() << "\n\n";
-
-		// content
-		response << content;
-
-		content = response.str();
-	}
-
-	::write(_socket, content.data(), content.size());
-}
-
-// tmp: to be implemented in another file
-auto generate_favicon_png(void) -> std::string {
-	std::string fav;
-	fav.reserve(64 * 64 * 4);
-
-	for (int y = 0; y < 64; y++) {
-		for (int x = 0; x < 64; x++) {
-			if (x < 32 && y < 32) {
-				fav.push_back((char)0x00);
-				fav.push_back((char)0x00);
-				fav.push_back((char)0x00);
-				fav.push_back((char)0xFF);
-			} else {
-				fav.push_back((char)0xFF);
-				fav.push_back((char)0xFF);
-				fav.push_back((char)0xFF);
-				fav.push_back((char)0xFF);
-			}
-		}
-	}
-
-	return fav;
-}
 
 // -- public lifecycle --------------------------------------------------------
 
@@ -157,75 +69,64 @@ cs::client::client(cs::socket&& ___so) noexcept
 }
 
 
+
 // -- public overriden methods ------------------------------------------------
 
 /* read */
 auto cs::client::read(void) -> void {
 
-	std::string buffer{};
+	cs::hint::info("reading from client");
 
-	std::cout << "\x1b[32mreading from client\x1b[0m" << std::endl;
+	// new reader
+	cs::reader<BUFFER_SIZE> reader;
 
-	char buff[1024];
+	// read from socket
+	reader.read(_socket);
 
-	while (true) {
+	//::write(STDOUT_FILENO, reader.data(), reader.size());
+	//::write(STDOUT_FILENO, "\n", 1U);
 
-		std::cout << "reading socket... " << _socket << std::endl;
-		const auto ret = ::recv(_socket, buff, sizeof(buff), 0);
+	// check for disconnection
+	if (reader.empty()) {
+		cs::dispatch::remove(*this);
+		cs::hint::success("client disconnected");
+		return;
+	}
 
-		if (ret == -1) {
-			perror("recv");
-			throw cs::runtime_error{"failed to read from client"};
+	// parse request
+	_parser.parse(_request, reader);
+
+	if (_parser.complete()) {
+		//_request.print();
+
+		if (_request.method().type() == cs::http::method::GET) {
+			std::string req{_request.method().uri().data(), _request.method().uri().size()};
+			if (req == "/") {
+				std::string path = "site/index.html";
+				serve_file(path, "text/html");
+			}
+			else if (req == "/style.css") {
+				std::string path = "site/style.css";
+				serve_file(path, "text/css");
+			}
+			else if (req == "/issues.json") {
+				std::cout << "sending issues.json" << std::endl;
+				std::string path = "site/issues.json";
+				serve_file(path, "application/json");
+			}
+			else {
+				std::string content = "HTTP/1.1 404 Not Found\n\n404 Not Found";
+				::write(_socket, content.data(), content.size());
+			}
 		}
-
-		if (ret == 0) {
-			std::cout << "\x1b[31mclient disconnected\x1b[0m" << std::endl;
-			cs::dispatch::remove(*this);
-			return;
-		}
-
-		buffer.append(buff, (size_t)ret);
-
-		if ((size_t)ret < sizeof(buff))
-			break;
+		_request.clear();
+		_parser.clear();
 	}
-
-	//std::cout << buffer << std::endl;
-
-
-
-	//std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
-
-
-	std::string path;
-
-	if (buffer.find("GET / ") != std::string::npos) {
-		path = "site/index.html";
-		serve_file(path, "text/html");
-	}
-
-	else if (buffer.find("GET /style.css ") != std::string::npos) {
-		path = "site/style.css";
-		serve_file(path, "text/css");
-	}
-
-	else if (buffer.find("GET /issues2.json ") != std::string::npos) {
-		path = "site/issues2.json";
-		serve_file(path, "application/json");
-	}
-
-	//else if (buffer.find("GET /favicon.png ") != std::string::npos) {
-	//	std::string fav = generate_favicon_png();
-	//	::write(_socket, fav.c_str(), fav.size());
-	//}
-
-	//cs::dispatch::mod<cs::ev_write>(*this);
 }
 
 /* send */
 auto cs::client::send(void) -> void {
-	std::cout << "\x1b[32mwriting to client\x1b[0m" << std::endl;
-	//serve_index();
+	cs::hint::info("writing to client");
 }
 
 /* descriptor */
