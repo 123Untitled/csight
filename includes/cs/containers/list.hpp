@@ -5,8 +5,9 @@
 #include "cs/memory/malloc.hpp"
 #include "cs/type_traits/forward.hpp"
 #include "cs/type_traits/conditional.hpp"
+#include "cs/diagnostics/exception_guard.hpp"
+#include "cs/memory/lifecycle.hpp"
 
-#include <new>
 #include <iostream>
 
 
@@ -90,6 +91,9 @@ namespace cs {
 
 			}; // struct ___node
 
+
+			/* lifecycle type */
+			using ___lifecycle = cs::lifecycle<___node>;
 
 
 		public:
@@ -272,35 +276,59 @@ namespace cs {
 
 			// -- public modifiers --------------------------------------------
 
+			/* clear */
+			auto clear(void) noexcept -> void {
+				_clear();
+				_init();
+			}
+
 			/* push back */
 			auto push_back(const_reference ___vl) noexcept -> void {
 
+				// allocate memory for new node
 				auto ___tmp = cs::malloc<___node>();
 
-				if (___tmp == nullptr)
-					return;
+				// guard memory allocation
+				cs::exception_guard ___guard{[&___tmp] {
+					cs::free(___tmp);
+				}};
 
-				::new ((void*)___tmp) ___node{___vl};
+				// construct new node
+				___lifecycle::construct(___tmp, ___vl);
 
+				// complete memory allocation
+				___guard.complete();
+
+				// link new node
 				*_tail = ___tmp;
 				 _tail = &(*_tail)->_next;
 
+				 // increment size
 				++_size;
 			}
 
 			/* push back */
 			auto push_back(value_type&& ___vl) noexcept -> void {
 
+				// allocate memory for new node
 				auto ___tmp = cs::malloc<___node>();
 
-				if (___tmp == nullptr)
-					return;
+				// guard memory allocation
+				cs::exception_guard ___guard{[&___tmp] {
+					cs::free(___tmp);
+				}};
 
-				::new ((void*)___tmp) ___node{static_cast<value_type&&>(___vl)};
+				// construct new node
+				___lifecycle::construct(___tmp, cs::move(___vl));
 
+				// complete memory allocation
+				___guard.complete();
+
+				// link new node
 				*_tail = ___tmp;
 				 _tail = &(*_tail)->_next;
 
+				 // increment size
 				++_size;
 			}
 
@@ -308,16 +336,25 @@ namespace cs {
 			template <typename... ___params>
 			auto emplace_back(___params&&... ___args) noexcept -> void {
 
+				// allocate memory for new node
 				auto ___tmp = cs::malloc<___node>();
 
-				if (___tmp == nullptr)
-					return;
+				// guard memory allocation
+				cs::exception_guard ___guard{[&___tmp] {
+					cs::free(___tmp);
+				}};
 
-				::new ((void*)___tmp) ___node{cs::forward<___params>(___args)...};
+				// construct new node
+				___lifecycle::construct(___tmp, cs::forward<___params>(___args)...);
 
+				// complete memory allocation
+				___guard.complete();
+
+				// link new node
 				*_tail = ___tmp;
 				 _tail = &(*_tail)->_next;
 
+				 // increment size
 				++_size;
 			}
 
@@ -354,10 +391,21 @@ namespace cs {
 
 			/* clear */
 			auto _clear(void) noexcept -> void {
+
+				// loop over nodes
 				while (_head != nullptr) {
-					auto ___tmp = _head;
-					_head = _head->_next;
-					cs::free(___tmp);
+
+					// save next node
+					auto ___nx = _head->_next;
+
+					// destroy current node
+					___lifecycle::destroy(_head);
+
+					// free current node
+					cs::free(_head);
+
+					// move to next node
+					_head = ___nx;
 				}
 			}
 
@@ -526,9 +574,6 @@ namespace cs {
 			auto operator>=(const ___iterator<___c>& ___ot) const noexcept -> bool {
 				return _node >= ___ot._node;
 			}
-
-
-
 
 
 	}; // class ___iterator
