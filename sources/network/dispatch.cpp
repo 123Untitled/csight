@@ -131,13 +131,6 @@ auto cs::dispatch::_poll(void) -> void {
 		// get observer
 		cs::io_event& ___io = _data(_events[i]);
 
-		// check eof
-		if (_events[i].flags & EV_EOF) {
-			cs::hint::info("e o f");
-			_running = false;
-			continue;
-		}
-
 		// check event
 		if (ev_read(ev))
 			___io.read();
@@ -336,7 +329,7 @@ auto cs::dispatch::_remove(cs::io_event& ___io) -> void {
 	};
 
 	// remove event
-	if (::epoll_ctl(._handle, EPOLL_CTL_DEL, ___io.descriptor(), &event) == -1)
+	if (::epoll_ctl(_handle, EPOLL_CTL_DEL, ___io.descriptor(), &event) == -1)
 		throw cs::runtime_error{"failed to remove descriptor from epoll"};
 
 	#endif
@@ -394,7 +387,7 @@ auto cs::dispatch::_disable(cs::io_event& ___io) -> void {
 	};
 
 	// remove event
-	if (::epoll_ctl(._handle, EPOLL_CTL_MOD, ___io.descriptor(), &event) == -1)
+	if (::epoll_ctl(_handle, EPOLL_CTL_MOD, ___io.descriptor(), &event) == -1)
 		throw cs::runtime_error{"failed to remove descriptor from epoll"};
 
 	#endif
