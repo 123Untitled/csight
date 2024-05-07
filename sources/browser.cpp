@@ -40,10 +40,13 @@ auto cs::open_browser(const ::in_port_t ___port) -> void {
 		};
 
 		char ___cmd[] = "/usr/bin/open";
+		char ___arg[] = "-g";
 
-		char* ___args[] = {___cmd, ___url, nullptr};
+		char* ___args[] = {___cmd,
+			//___arg,
+			___url, nullptr};
 
-		if (::execl(___cmd, ___cmd, ___url, nullptr) == -1)
+		if (::execve(___cmd, ___args, environ) == -1)
 			perror("execvp");
 		exit(EXIT_FAILURE);
 	}
