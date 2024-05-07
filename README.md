@@ -33,17 +33,6 @@ Run the executable with the compiler output as input:
 $CXX -c main.cpp 2>&1 | ./csight
 ```
 
-Start the server on port 8080 and open the browser automatically.
-
-```zsh
-./csight --port 8080 --auto
-```
-
-Forwards the compiler output in the terminal (by default, it does not print the original output).
-```zsh
-./csight --forward
-```
-
 ## 📚 Usage
 
 ### Command Line Interface
@@ -58,17 +47,6 @@ Options:
   -a, --auto            Automatically open the browser
   -f, --forward         Forward the original compiler output
 ```
-
-### Web Interface
-
-The web interface displays the filtered compiler output, color-coded error messages, and a file tree to navigate the project structure. The interface allows users to filter error messages by file, line, and error type, making it easier to identify and fix issues.
-
-![Web Interface](
-https://user-images.githubusercontent.com/68425608/137594073-3b3b3b3b-1b3b-4b3b-8b3b-3b3b3b3b3b3b.png)
-
-
-
-## Future Improvements
 
 
 
