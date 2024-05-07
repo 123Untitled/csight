@@ -23,7 +23,7 @@
 Clone the repository and compile the source code:
 
 ```zsh
-git clone 'https://github.com/123Untitled/compile_sight.git'
+git clone 'https://github.com/123Untitled/csight.git'
 make
 ```
 
