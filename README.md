@@ -1,5 +1,7 @@
 # 🔭 Compile Sight
 
+*Note: This project is currently under development and is not yet usable.*
+
 **Compile Sight** enhances the readability of C++ compiler error messages by filtering, formatting, and color-coding them, making it easier for developers to understand and fix code issues. This tool aims to turn the often daunting compiler output into a more approachable and informative feedback loop.
 
 ## 📋 Features
