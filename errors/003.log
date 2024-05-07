@@ -1,0 +1,10 @@
+
+5 errors generated.
+gmake: *** [Makefile:172: includes/cs/core/entry.pch] Error 1
+sources/yo : yo.cpp:2:1: error: unknown type name 'fijsoijf'
+fijsoijf
+^
+sources/yo : yo.cpp:2:9: error: expected unqualified-id
+fijsoijf
+        ^
+2 errors generated.

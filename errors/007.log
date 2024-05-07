@@ -1,0 +1,76 @@
+[32m                    _ _            _     _   _   
+  ___ ___ _____ ___|_| |___    ___|_|___| |_| |_ 
+ |  _| . |     | . | | | -_|  |_ -| | . |   |  _|
+ |___|___|_|_|_|  _|_|_|___|  |___|_|_  |_|_|_|  
+               |_|                  |___|        
+ [0m
+[33mobj[0m sources/http/method.o
+[33mobj[0m sources/diagnostics/exception.o
+[33mobj[0m sources/network/server.o
+In file included from sources/network/server.cpp:3:
+In file included from includes/cs/network/dispatch.hpp:12:
+In file included from includes/cs/memory/unique_ptr.hpp:10:
+[1mincludes/cs/type_traits/is_base_of.hpp:42:23: [0m[0;1;31merror: [0m[1matomic constraint must be of type 'bool' (found 'cs::bool_constant<decltype(cs::___impl::___test_is_base_of<io_event, client>(0))::value>' (aka 'integral_constant<bool, true>'))[0m
+   42 |         concept is_base_of = cs::bool_constant<[0m
+      | [0;1;32m                             ^~~~~~~~~~~~~~~~~~
+[0m   43 |         /*[0m
+      | [0;1;32m        ~~
+[0m   44 |                         std::is_class<Base>::value &&[0m
+      | [0;1;32m                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m   45 |                         std::is_class<Derived>::value &&[0m
+      | [0;1;32m                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m   46 |                         */[0m
+      | [0;1;32m                        ~~
+[0m   47 |                         decltype(cs::___impl::___test_is_base_of<___base, ___derived>(0))::value[0m
+      | [0;1;32m                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m   48 |                         > {};[0m
+      | [0;1;32m                        ~~~~
+[0m[1mincludes/cs/memory/unique_ptr.hpp:102:19: [0m[0;1;36mnote: [0mwhile checking the satisfaction of concept 'is_base_of<cs::io_event, cs::client>' requested here[0m
+  102 |                                 static_assert(cs::is_base_of<___type, ___tp>,[0m
+      | [0;1;32m                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m[1mincludes/cs/network/dispatch.hpp:89:17: [0m[0;1;36mnote: [0min instantiation of function template specialization 'cs::unique_ptr<cs::io_event>::unique_ptr<cs::client>' requested here[0m
+   89 |                                 (___sh._add(cs::forward<___ios>(___args)), ...);[0m
+      | [0;1;32m                                            ^
+[0m[1msources/network/server.cpp:77:16: [0m[0;1;36mnote: [0min instantiation of function template specialization 'cs::dispatch::add<cs::unique_ptr<cs::client>>' requested here[0m
+   77 |         cs::dispatch::add([0m
+      | [0;1;32m                      ^
+[0m1 error generated.
+gmake: *** [Makefile:175: sources/network/server.o] Error 1
+gmake: *** Waiting for unfinished jobs....
+[33mobj[0m sources/http/parser.o
+[33mobj[0m sources/main.o
+[1msources/main.cpp:42:2: [0m[0;1;31merror: [0m[1mno matching function for call to 'func'[0m
+   42 |         func<234, 4>((int)0);[0m
+      | [0;1;32m        ^~~~~~~~~~~~
+[0m[1msources/main.cpp:34:6: [0m[0;1;36mnote: [0mcandidate template ignored: invalid explicitly-specified argument for template parameter 'Args'[0m
+   34 | void func(Args&&... args) {[0m
+      | [0;1;32m     ^
+[0mIn file included from sources/main.cpp:7:
+In file included from includes/cs/network/dispatch.hpp:12:
+In file included from includes/cs/memory/unique_ptr.hpp:10:
+[1mincludes/cs/type_traits/is_base_of.hpp:42:23: [0m[0;1;31merror: [0m[1matomic constraint must be of type 'bool' (found 'cs::bool_constant<decltype(cs::___impl::___test_is_base_of<io_event, server>(0))::value>' (aka 'integral_constant<bool, true>'))[0m
+   42 |         concept is_base_of = cs::bool_constant<[0m
+      | [0;1;32m                             ^~~~~~~~~~~~~~~~~~
+[0m   43 |         /*[0m
+      | [0;1;32m        ~~
+[0m   44 |                         std::is_class<Base>::value &&[0m
+      | [0;1;32m                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m   45 |                         std::is_class<Derived>::value &&[0m
+      | [0;1;32m                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m   46 |                         */[0m
+      | [0;1;32m                        ~~
+[0m   47 |                         decltype(cs::___impl::___test_is_base_of<___base, ___derived>(0))::value[0m
+      | [0;1;32m                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m   48 |                         > {};[0m
+      | [0;1;32m                        ~~~~
+[0m[1mincludes/cs/memory/unique_ptr.hpp:102:19: [0m[0;1;36mnote: [0mwhile checking the satisfaction of concept 'is_base_of<cs::io_event, cs::server>' requested here[0m
+  102 |                                 static_assert(cs::is_base_of<___type, ___tp>,[0m
+      | [0;1;32m                                              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m[1mincludes/cs/network/dispatch.hpp:89:17: [0m[0;1;36mnote: [0min instantiation of function template specialization 'cs::unique_ptr<cs::io_event>::unique_ptr<cs::server>' requested here[0m
+   89 |                                 (___sh._add(cs::forward<___ios>(___args)), ...);[0m
+      | [0;1;32m                                            ^
+[0m[1msources/main.cpp:94:17: [0m[0;1;36mnote: [0min instantiation of function template specialization 'cs::dispatch::add<cs::unique_ptr<cs::server>>' requested here[0m
+   94 |                 cs::dispatch::add([0m
+      | [0;1;32m                              ^
+[0m2 errors generated.
+gmake: *** [Makefile:175: sources/main.o] Error 1

@@ -1,0 +1,13 @@
+
+In file included from includes/cs/core/entry.hpp:9:
+In file included from includes/cs/string.hpp:10:
+includes/cs/string_view.hpp:159:24: error: use of undeclared identifier 'std'
+inline auto operator<<(std::ostream& os, const cs::string_view& view) -> std::ostream& {
+                       ^
+includes/cs/string_view.hpp:159:74: error: use of undeclared identifier 'std'
+inline auto operator<<(std::ostream& os, const cs::string_view& view) -> std::ostream& {
+                                                                         ^
+includes/cs/string_view.hpp:160:43: error: use of undeclared identifier 'std'
+        return os.write(view.data(), static_cast<std::streamsize>(view.size()));
+                                                 ^
+

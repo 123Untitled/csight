@@ -1,0 +1,12 @@
+[32m                    _ _            _     _   _   
+  ___ ___ _____ ___|_| |___    ___|_|___| |_| |_ 
+ |  _| . |     | . | | | -_|  |_ -| | . |   |  _|
+ |___|___|_|_|_|  _|_|_|___|  |___|_|_  |_|_|_|  
+               |_|                  |___|        
+ [0m
+[33mobj[0m sources/core/parser.o
+sources/core/parser.cpp:129:2: fatal error: use of undeclared identifier 'difij'
+        difij
+        ^
+1 error generated.
+gmake: *** [Makefile:171: sources/core/parser.o] Error 1

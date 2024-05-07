@@ -1,0 +1,15 @@
+[32m                    _ _            _     _   _   
+  ___ ___ _____ ___|_| |___    ___|_|___| |_| |_ 
+ |  _| . |     | . | | | -_|  |_ -| | . |   |  _|
+ |___|___|_|_|_|  _|_|_|___|  |___|_|_  |_|_|_|  
+               |_|                  |___|        
+ [0m
+[33mobj[0m sources/main.o
+[1msources/main.cpp:42:2: [0m[0;1;31merror: [0m[1mno matching function for call to 'func'[0m
+        func<234, 4>((int)0);
+[0;1;32m        ^~~~~~~~~~~~
+[0m[1msources/main.cpp:34:6: [0m[0;1;30mnote: [0mcandidate template ignored: invalid explicitly-specified argument for template parameter 'Args'[0m
+void func(Args&&... args) {
+[0;1;32m     ^
+[0m1 error generated.
+gmake: *** [Makefile:174: sources/main.o] Error 1

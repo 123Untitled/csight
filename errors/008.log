@@ -1,0 +1,84 @@
+[32m
+  ▄████▄   ▒█████   ███▄ ▄███▓ ██▓███   ██▓ ██▓    ▓█████      ██████  ██▓  ▄████  ██░ ██ ▄▄▄█████▓
+ ▒██▀ ▀█  ▒██▒  ██▒▓██▒▀█▀ ██▒▓██░  ██▒▓██▒▓██▒    ▓█   ▀    ▒██    ▒ ▓██▒ ██▒ ▀█▒▓██░ ██▒▓  ██▒ ▓▒
+ ▒▓█    ▄ ▒██░  ██▒▓██    ▓██░▓██░ ██▓▒▒██▒▒██░    ▒███      ░ ▓██▄   ▒██▒▒██░▄▄▄░▒██▀▀██░▒ ▓██░ ▒░
+ ▒▓▓▄ ▄██▒▒██   ██░▒██    ▒██ ▒██▄█▓▒ ▒░██░▒██░    ▒▓█  ▄      ▒   ██▒░██░░▓█  ██▓░▓█ ░██ ░ ▓██▓ ░ 
+ ▒ ▓███▀ ░░ ████▓▒░▒██▒   ░██▒▒██▒ ░  ░░██░░██████▒░▒████▒   ▒██████▒▒░██░░▒▓███▀▒░▓█▒░██▓  ▒██▒ ░ 
+ ░ ░▒ ▒  ░░ ▒░▒░▒░ ░ ▒░   ░  ░▒▓▒░ ░  ░░▓  ░ ▒░▓  ░░░ ▒░ ░   ▒ ▒▓▒ ▒ ░░▓   ░▒   ▒  ▒ ░░▒░▒  ▒ ░░   
+   ░  ▒     ░ ▒ ▒░ ░  ░      ░░▒ ░      ▒ ░░ ░ ▒  ░ ░ ░  ░   ░ ░▒  ░ ░ ▒ ░  ░   ░  ▒ ░▒░ ░    ░    
+ ░        ░ ░ ░ ▒  ░      ░   ░░        ▒ ░  ░ ░      ░      ░  ░  ░   ▒ ░░ ░   ░  ░  ░░ ░  ░      
+ ░ ░          ░ ░         ░             ░      ░  ░   ░  ░         ░   ░        ░  ░  ░  ░         
+ ░                                                                                                 
+ [0m
+[33mobj[0m sources/core/map.o
+[1msources/core/map.cpp:8:9: [0m[0;1;31merror: [0m[1mcannot initialize a member subobject of type 'node **' with an rvalue of type 'cs::core::entry **'[0m
+: _data{cs::calloc<pointer>(DEFAULT_SIZE)},
+[0;1;32m        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m[1msources/core/map.cpp:104:21: [0m[0;1;31merror: [0m[1mno member named 'file' in 'cs::core::map::node'[0m
+                if (_data[index]->file() == file) {
+[0;1;32m                    ~~~~~~~~~~~~  ^
+[0m[1msources/core/map.cpp:105:18: [0m[0;1;31merror: [0m[1mno member named '_issues' in 'cs::core::map::node'[0m
+                        _data[index]->_issues.push(cs::move(___iss));
+[0;1;32m                        ~~~~~~~~~~~~  ^
+[0m[1msources/core/map.cpp:119:17: [0m[0;1;31merror: [0m[1mincompatible pointer types assigning to 'node *' from 'cs::core::entry *'[0m
+        _data[index] = cs::malloc<value_type>();
+[0;1;32m                       ^~~~~~~~~~~~~~~~~~~~~~~~
+[0m[1msources/core/map.cpp:122:2: [0m[0;1;31merror: [0m[1mno matching function for call to 'construct'[0m
+        cs::lifecycle<value_type>::construct(_data[index],
+[0;1;32m        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m[1mincludes/cs/memory/lifecycle.hpp:55:26: [0m[0;1;30mnote: [0mcandidate function not viable: requires 2 arguments, but 3 were provided[0m
+                        static constexpr auto construct(pointer ___p, const value_type& ___value)
+[0;1;32m                                              ^
+[0m[1mincludes/cs/memory/lifecycle.hpp:63:26: [0m[0;1;30mnote: [0mcandidate function not viable: requires 2 arguments, but 3 were provided[0m
+                        static constexpr auto construct(pointer ___p, value_type&& ___value)
+[0;1;32m                                              ^
+[0m[1mincludes/cs/memory/lifecycle.hpp:74:26: [0m[0;1;30mnote: [0mcandidate function template not viable: no known conversion from 'node *' to 'pointer' (aka 'cs::core::entry *') for 1st argument[0m
+                        static constexpr auto construct(pointer ___p, ___params&&... ___args)
+[0;1;32m                                              ^
+[0m[1mincludes/cs/memory/lifecycle.hpp:47:26: [0m[0;1;30mnote: [0mcandidate function not viable: requires single argument '___p', but 3 arguments were provided[0m
+                        static constexpr auto construct(pointer ___p)
+[0;1;32m                                              ^
+[0m[1msources/core/map.cpp:144:21: [0m[0;1;31merror: [0m[1mno member named 'file' in 'cs::core::map::node'[0m
+                if (_data[index]->file() == file)
+[0;1;32m                    ~~~~~~~~~~~~  ^
+[0m[1msources/core/map.cpp:145:11: [0m[0;1;31merror: [0m[1mcannot initialize return object of type 'const_pointer' (aka 'const cs::core::entry *') with an lvalue of type 'node *'[0m
+                        return _data[index];
+[0;1;32m                               ^~~~~~~~~~~~
+[0m[1msources/core/map.cpp:178:12: [0m[0;1;31merror: [0m[1mcannot initialize a variable of type 'pointer *' (aka 'cs::core::entry **') with an lvalue of type 'node **'[0m
+        pointer*  it = _data;
+[0;1;32m                  ^    ~~~~~
+[0m[1msources/core/map.cpp:218:39: [0m[0;1;31merror: [0m[1mno member named 'file' in 'cs::core::map::node'[0m
+                auto idx = ___self::_hash(_data[i]->file()) % ___cp;
+[0;1;32m                                          ~~~~~~~~  ^
+[0m[1msources/core/map.cpp:238:10: [0m[0;1;31merror: [0m[1mincompatible pointer types assigning to 'node **' from 'cs::core::entry **'[0m
+        _data = ___new;
+[0;1;32m                ^~~~~~
+[0m10 errors generated.
+gmake: *** [Makefile:196: sources/core/map.o] Error 1
+gmake: *** Waiting for unfinished jobs....
+[33mobj[0m sources/main.o
+In file included from sources/main.cpp:3:
+In file included from includes/cs/core/parser.hpp:8:
+[1mincludes/cs/map.hpp:205:8: [0m[0;1;31merror: [0m[1mno matching function for call to object of type '(lambda at includes/cs/html.hpp:159:19)'[0m
+                                                        ___fu(*_data[i], cs::forward<___params>(___args)...); }
+[0;1;32m                                                        ^~~~~
+[0m[1mincludes/cs/html.hpp:159:10: [0m[0;1;30mnote: [0min instantiation of function template specialization 'cs::core::map::for_each<(lambda at includes/cs/html.hpp:159:19), cs::string &>' requested here[0m
+                ___map.for_each([](const cs::core::entry& e, cs::string& json) {
+[0;1;32m                       ^
+[0m[1mincludes/cs/html.hpp:159:19: [0m[0;1;30mnote: [0mcandidate function not viable: no known conversion from 'node' to 'const cs::core::entry' for 1st argument[0m
+                ___map.for_each([](const cs::core::entry& e, cs::string& json) {
+[0;1;32m                                ^
+[0m[1mincludes/cs/html.hpp:159:19: [0m[0;1;30mnote: [0mconversion candidate of type 'void (*)(const cs::core::entry &, cs::string &)'[0m
+In file included from sources/main.cpp:3:
+In file included from includes/cs/core/parser.hpp:8:
+[1mincludes/cs/map.hpp:189:8: [0m[0;1;31merror: [0m[1mno matching function for call to object of type '(lambda at sources/main.cpp:145:14)'[0m
+                                                        ___fu(*_data[i], cs::forward<___params>(___args)...); }
+[0;1;32m                                                        ^~~~~
+[0m[1msources/main.cpp:145:5: [0m[0;1;30mnote: [0min instantiation of function template specialization 'cs::core::map::for_each<(lambda at sources/main.cpp:145:14)>' requested here[0m
+                m.for_each([&](const cs::core::entry& e) {
+[0;1;32m                  ^
+[0m[1msources/main.cpp:145:14: [0m[0;1;30mnote: [0mcandidate function not viable: no known conversion from 'node' to 'const cs::core::entry' for 1st argument[0m
+                m.for_each([&](const cs::core::entry& e) {
+[0;1;32m                           ^
+[0m2 errors generated.
+gmake: *** [Makefile:196: sources/main.o] Error 1

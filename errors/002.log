@@ -1,0 +1,111 @@
+[32m                    _ _            _     _   _   
+  ___ ___ _____ ___|_| |___    ___|_|___| |_| |_ 
+ |  _| . |     | . | | | -_|  |_ -| | . |   |  _|
+ |___|___|_|_|_|  _|_|_|___|  |___|_|_  |_|_|_|  
+               |_|                  |___|        
+ [0m
+[34mcdb[0m compile_commands.json
+[35mpch[0m includes/cs/core/warnings.pch
+[35mpch[0m includes/cs/memory/lifecycle.pch
+includes/cs/memory/lifecycle.hpp:67:39: error: no member named 'move' in namespace 'cs'
+                                ::new((void*)___p) value_type{cs::move(___value)};
+                                                              ~~~~^
+1 error generated.
+gmake: *** [Makefile:172: includes/cs/memory/lifecycle.pch] Error 1
+gmake: *** Waiting for unfinished jobs....
+[35mpch[0m includes/cs/memory/memcmp.pch
+[35mpch[0m includes/cs/memory/malloc.pch
+[35mpch[0m includes/cs/memory/unique_ptr.pch
+[35mpch[0m includes/cs/core/issues.pch
+In file included from includes/cs/core/issues.hpp:7:
+In file included from includes/cs/core/issue.hpp:5:
+In file included from includes/cs/containers/vector.hpp:12:
+includes/cs/memory/lifecycle.hpp:67:39: error: no member named 'move' in namespace 'cs'
+                                ::new((void*)___p) value_type{cs::move(___value)};
+                                                              ~~~~^
+In file included from includes/cs/core/issues.hpp:7:
+In file included from includes/cs/core/issue.hpp:5:
+includes/cs/containers/vector.hpp:246:48: error: no member named 'move' in namespace 'cs'
+                                ___lifecycle::construct(_data + _size, cs::move(___val));
+                                                                       ~~~~^
+2 errors generated.
+gmake: *** [Makefile:172: includes/cs/core/issues.pch] Error 1
+[35mpch[0m includes/cs/core/issue.pch
+In file included from includes/cs/core/issue.hpp:5:
+In file included from includes/cs/containers/vector.hpp:12:
+includes/cs/memory/lifecycle.hpp:67:39: error: no member named 'move' in namespace 'cs'
+                                ::new((void*)___p) value_type{cs::move(___value)};
+                                                              ~~~~^
+In file included from includes/cs/core/issue.hpp:5:
+includes/cs/containers/vector.hpp:246:48: error: no member named 'move' in namespace 'cs'
+                                ___lifecycle::construct(_data + _size, cs::move(___val));
+                                                                       ~~~~^
+2 errors generated.
+gmake: *** [Makefile:172: includes/cs/core/issue.pch] Error 1
+[35mpch[0m includes/cs/core/parser.pch
+In file included from includes/cs/core/parser.hpp:7:
+In file included from includes/cs/containers/list.hpp:8:
+includes/cs/diagnostics/exception_guard.hpp:38:20: error: no member named 'move' in namespace 'cs'
+                        : _rollback{cs::move(___rb)}, _completed{false} {
+                                    ~~~~^
+includes/cs/diagnostics/exception_guard.hpp:46:20: error: no member named 'move' in namespace 'cs'
+                        : _rollback{cs::move(___ot._rollback)}, _completed{___ot._completed} {
+                                    ~~~~^
+In file included from includes/cs/core/parser.hpp:7:
+In file included from includes/cs/containers/list.hpp:9:
+includes/cs/memory/lifecycle.hpp:67:39: error: no member named 'move' in namespace 'cs'
+                                ::new((void*)___p) value_type{cs::move(___value)};
+                                                              ~~~~^
+In file included from includes/cs/core/parser.hpp:7:
+includes/cs/containers/list.hpp:322:37: error: no member named 'move' in namespace 'cs'; did you mean 'std::move'?
+                                ___lifecycle::construct(___tmp, cs::move(___vl));
+                                                                ^~~~~~~~
+                                                                std::move
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/move.h:30:1: note: 'std::move' declared here
+move(_LIBCPP_LIFETIMEBOUND _Tp&& __t) _NOEXCEPT {
+^
+In file included from includes/cs/core/parser.hpp:8:
+includes/cs/containers/vector.hpp:246:44: error: no member named 'move' in namespace 'cs'; did you mean 'std::move'?
+                                ___lifecycle::construct(_data + _size, cs::move(___val));
+                                                                       ^~~~~~~~
+                                                                       std::move
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/move.h:30:1: note: 'std::move' declared here
+move(_LIBCPP_LIFETIMEBOUND _Tp&& __t) _NOEXCEPT {
+^
+5 errors generated.
+gmake: *** [Makefile:172: includes/cs/core/parser.pch] Error 1
+[35mpch[0m includes/cs/core/entry.pch
+In file included from includes/cs/core/entry.hpp:8:
+includes/cs/memory/lifecycle.hpp:67:39: error: no member named 'move' in namespace 'cs'
+                                ::new((void*)___p) value_type{cs::move(___value)};
+                                                              ~~~~^
+In file included from includes/cs/core/entry.hpp:9:
+In file included from includes/cs/string.hpp:10:
+includes/cs/string_view.hpp:159:24: error: use of undeclared identifier 'std'
+inline auto operator<<(std::ostream& os, const cs::string_view& view) -> std::ostream& {
+                       ^
+includes/cs/string_view.hpp:159:74: error: use of undeclared identifier 'std'
+inline auto operator<<(std::ostream& os, const cs::string_view& view) -> std::ostream& {
+                                                                         ^
+includes/cs/string_view.hpp:160:43: error: use of undeclared identifier 'std'
+        return os.write(view.data(), static_cast<std::streamsize>(view.size()));
+                                                 ^
+In file included from includes/cs/core/entry.hpp:10:
+In file included from includes/cs/core/issues.hpp:7:
+In file included from includes/cs/core/issue.hpp:5:
+includes/cs/containers/vector.hpp:246:44: error: no member named 'move' in namespace 'cs'; did you mean 'std::move'?
+                                ___lifecycle::construct(_data + _size, cs::move(___val));
+                                                                       ^~~~~~~~
+                                                                       std::move
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/__utility/move.h:30:1: note: 'std::move' declared here
+move(_LIBCPP_LIFETIMEBOUND _Tp&& __t) _NOEXCEPT {
+^
+5 errors generated.
+gmake: *** [Makefile:172: includes/cs/core/entry.pch] Error 1
+sources/yo : yo.cpp:2:1: error: unknown type name 'fijsoijf'
+fijsoijf
+^
+sources/yo : yo.cpp:2:9: error: expected unqualified-id
+fijsoijf
+        ^
+2 errors generated.
