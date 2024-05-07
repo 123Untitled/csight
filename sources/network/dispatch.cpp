@@ -1,6 +1,7 @@
 #include "cs/network/dispatch.hpp"
 #include "cs/diagnostics/exception.hpp"
 #include "cs/type_traits/move.hpp"
+#include "cs/hint.hpp"
 #include <unistd.h>
 
 #include <iostream>
@@ -16,6 +17,11 @@ auto cs::dispatch::poll(void) -> void {
 /* remove */
 auto cs::dispatch::remove(cs::io_event& ___obs) -> void {
 	___self::_shared()._remove(___obs);
+}
+
+/* disable */
+auto cs::dispatch::disable(cs::io_event& ___obs) -> void {
+	___self::_shared()._disable(___obs);
 }
 
 /* run */
@@ -125,6 +131,13 @@ auto cs::dispatch::_poll(void) -> void {
 		// get observer
 		cs::io_event& ___io = _data(_events[i]);
 
+		// check eof
+		if (_events[i].flags & EV_EOF) {
+			cs::hint::info("e o f");
+			_running = false;
+			continue;
+		}
+
 		// check event
 		if (ev_read(ev))
 			___io.read();
@@ -181,6 +194,10 @@ auto cs::dispatch::_wait(void) -> size_type {
 /* add */
 auto cs::dispatch::_add(cs::unique_ptr<cs::io_event>&& ___io) -> void {
 
+	// check state
+	if (not _running)
+		return;
+
 	auto it = _map.emplace(___io.get(), cs::move(___io));
 
 	cs::io_event* user_data = it.first->second.get();
@@ -190,11 +207,13 @@ auto cs::dispatch::_add(cs::unique_ptr<cs::io_event>&& ___io) -> void {
 
 	#if defined(___cs_os_macos)
 
-	// create event
+	std::cout << "adding descriptor to dispatch: " << descriptor << std::endl;
+
+	// create event (enable EOF notification)
 	___event event {
 		.ident  = static_cast<uintptr_t>(descriptor),
-		.filter = EVFILT_READ, // default for all io objects
-		.flags  = EV_ADD,
+		.filter = EVFILT_READ,
+		.flags  = EV_ADD | EV_ENABLE | EV_EOF,
 		.fflags = 0U,
 		.data   = 0,
 		.udata  = user_data
@@ -206,7 +225,6 @@ auto cs::dispatch::_add(cs::unique_ptr<cs::io_event>&& ___io) -> void {
 	if (::kevent(_handle, &event, 1, nullptr, 0, nullptr) != 0)
 		throw cs::runtime_error{"failed to add descriptor to kqueue"};
 
-	std::cout << "added descriptor to dispatch: " << it.first->second->descriptor() << std::endl;
 
 	// -- linux ---------------------------------------------------------------
 
@@ -226,6 +244,8 @@ auto cs::dispatch::_add(cs::unique_ptr<cs::io_event>&& ___io) -> void {
 		throw cs::runtime_error{"failed to add descriptor to epoll"};
 
 	#endif
+
+	std::cout << "dispatch descriptor [" << it.first->second->descriptor() << "]\n";
 }
 
 /* mod */
@@ -326,6 +346,58 @@ auto cs::dispatch::_remove(cs::io_event& ___io) -> void {
 
 	// erase from map
 	_map.erase(it);
+
+}
+
+/* disable */
+auto cs::dispatch::_disable(cs::io_event& ___io) -> void {
+
+	// search for io event
+	auto it = _map.find(&___io);
+
+	if (it == _map.end())
+		throw cs::runtime_error{"io event not found in dispatch map, cannot disable it!"};
+
+	std::cout << "disabling descriptor from dispatch: " << ___io.descriptor() << std::endl;
+
+
+	// -- macos ---------------------------------------------------------------
+
+	#if defined(___cs_os_macos)
+
+	// create event
+	struct kevent event {
+		.ident  = static_cast<uintptr_t>(___io.descriptor()),
+		.filter = EVFILT_READ,
+		.flags  = EV_DISABLE,
+		.fflags = 0U,
+		.data   = 0,
+		.udata  = nullptr
+	};
+
+	// remove event
+	if (::kevent(_handle, &event, 1, nullptr, 0, nullptr) == -1) {
+		perror("kevent");
+		throw cs::runtime_error{"failed to remove descriptor from kqueue"};
+	}
+
+
+	// -- linux ---------------------------------------------------------------
+
+	#elif defined(___cs_os_linux)
+
+	// create event
+	struct epoll_event event {
+		.events = 0,
+		.data   = {
+			.ptr = nullptr }
+	};
+
+	// remove event
+	if (::epoll_ctl(._handle, EPOLL_CTL_MOD, ___io.descriptor(), &event) == -1)
+		throw cs::runtime_error{"failed to remove descriptor from epoll"};
+
+	#endif
 
 }
 
