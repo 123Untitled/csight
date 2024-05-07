@@ -1,28 +1,20 @@
 #include "cs/config.hpp"
 #include "cs/core/parser.hpp"
+#include "cs/type_traits/move.hpp"
 #include <unistd.h>
+#include "cs/system/access.hpp"
 
 #include <iostream>
 
 #if ___cs_requirements
 
 
-// -- private lifecycle -------------------------------------------------------
+// -- public lifecycle --------------------------------------------------------
 
-/* descriptor constructor */
-cs::parser::parser(cs::list<cs::issue>& ___lst, const int ___fd) noexcept
-: _list{___lst}, _fd{___fd}, /* _buffer{} */ _data{nullptr},
-	_issue{} {
-}
-
-
-// -- public static methods ---------------------------------------------------
-
-/* parse */
-auto cs::parser::parse(const int ___fd) -> cs::list<cs::issue> {
-	cs::list<cs::issue> ___lst;
-	parser{___lst, ___fd}._parse();
-	return ___lst;
+/* default constructor */
+cs::parser::parser(void) noexcept
+: _transition{&_machine[START][EOBUFF]}, _back{START}, _data{nullptr}, _end{nullptr},
+  _map{nullptr}, _file{}, _issue{}, _count{0U} {
 }
 
 
@@ -31,40 +23,22 @@ auto cs::parser::parse(const int ___fd) -> cs::list<cs::issue> {
 /* parse */
 auto cs::parser::_parse(void) -> void {
 
-	___transition ___trs {
-		START,
-		NO_ACTION,
-		nullptr
-	};
+	// loop over data
+	for (;_data != _end; ++_data) {
 
-	while (((((((true))))))) {
+		// get next transition
+		_transition = &(_machine[_transition->_state])
+			[_ctable[static_cast<unsigned char>(*_data)]];
 
-		auto ___rd = ::read(_fd, _buffer, BUFFER_SIZE);
-
-		if (___rd == -1)
-			throw -1;
-
-		if (___rd == 0)
-			return;
-
-		_buffer[___rd] = '\0';
-
-
-		_data = _buffer;
-
-		while (*_data != '\0') {
-
-			___trs = _transition(___trs._state, _chartype(*_data));
-
-			if (___trs._msg != nullptr) {
-				std::cerr << "error: " << ___trs._msg << std::endl;
-				break;
-			}
-			_action(*this, ___trs._action);
-
-			++_data;
-		}
+		// execute action
+		(this->*_actions[_transition->_action])();
 	}
+
+	// end of buffer marker
+	_transition = &(_machine[_transition->_state][EOBUFF]);
+
+	// execute action
+	(this->*_actions[_transition->_action])();
 
 }
 
@@ -73,408 +47,191 @@ auto cs::parser::_parse(void) -> void {
 /* reset */
 auto cs::parser::reset(void) noexcept -> void {
 	_issue.clear();
+	_file.clear();
+	_count = 0U;
+	std::cout << "RESET" << std::endl;
+}
+
+/* increment */
+auto cs::parser::increment(void) noexcept -> void {
+	++_count;
 }
 
 /* complete issue */
-auto cs::parser::complete_issue(void) noexcept -> void {
-	//std::cout << "\x1b[1;31m" << "complete issue" << "\x1b[0m" << std::endl;
-	//_issue.print();
-	_list.emplace_back(static_cast<cs::issue&&>(_issue));
-	_issue.clear(); // to be removed
+auto cs::parser::complete_issue(void) -> void {
+	std::cout << "COMPLETE ISSUE" << std::endl;
+	_map->insert(cs::move(_file), cs::move(_issue));
+}
+
+/* complete file */
+auto cs::parser::complete_file(void) -> void {
+
+	// append buffer to file
+	_file.append(cs::string_view{_data - _count, _count});
+
+	// check file existence
+	if (not cs::access<F_OK>(_file)) {
+
+		std::cout << "\x1b[33mbad [\x1b[0m" << _file << "\x1b[33m]\x1b[0m" << std::endl;
+		_transition = &(_machine[IN_FILE][NO_ACTION]);
+		_count = 1U;
+	}
+	else {
+		std::cout << "\x1b[32mGOOD [\x1b[0m" << _file << "\x1b[32m]\x1b[0m" << std::endl;
+		_count = 0U;
+	}
+
+}
+
+/* save file */
+auto cs::parser::save_file(void) -> void {
+	_file.append(cs::string_view{_data - _count, _count});
+	_count = 0U;
 }
 
 
-/* add path */
-auto cs::parser::add_path(void) noexcept -> void {
-}
-
-/* add line */
-auto cs::parser::add_line(void) noexcept -> void {
-}
-
-/* add column */
-auto cs::parser::add_column(void) noexcept -> void {
-}
-
-/* add diagnostic */
-auto cs::parser::add_diagnostic(void) noexcept -> void {
+/* save diagnostic */
+auto cs::parser::save_diagnostic(void) -> void {
+	std::cout << "EOBUFF DIAGNOSTIC" << std::endl;
+	_issue.message().append(cs::string_view{_data - _count, _count});
+	_count = 0U;
 }
 
 
-/* count path */
-auto cs::parser::count_path(void) noexcept -> void {
-	_issue.path().push_back(*_data);
+/* complete diagnostic */
+auto cs::parser::complete_diagnostic(void) -> void {
+	_issue.message().append(cs::string_view{_data - _count, _count});
+	std::cout << "COMPLETE DIAGNOSTIC" << 
+	" \x1b[33m[\x1b[0m" << _issue.message() << "\x1b[33m]\x1b[0m" << std::endl;
+	_count = 0U;
+	_map->insert(cs::move(_file), cs::move(_issue));
+	//_file.clear(); // clear if file already exists in map (fix now map clear file if already exists)
 }
+
+/* complete status */
+auto cs::parser::complete_status(void) -> void {
+	std::cout << "\x1b[36mcomplete status [\x1b[0m" << cs::string_view{_data - _count, _count}
+	<< "\x1b[36m]\x1b[0m" << std::endl;
+	_count = 0U;
+}
+
+
 
 /* compute line */
 auto cs::parser::compute_line(void) noexcept -> void {
+	_count = 0U; // to be moved in another action (goal is to reset count after valid file)
 
 	auto& ___ln = _issue.line();
 
 	___ln *= 10U;
-	___ln += static_cast<___size>(*_data - '0');
+	___ln += static_cast<size_type>(*_data - '0');
+	std::cout << "\x1b[36mcompute line [\x1b[0m" << ___ln << "\x1b[36m]\x1b[0m" << std::endl;
 }
 
 /* compute column */
 auto cs::parser::compute_column(void) noexcept -> void {
+	_count = 0U; // to be moved in another action (goal is to reset count after valid file)
 
 	auto& ___col = _issue.column();
 
 	___col *= 10U;
-	___col += static_cast<___size>(*_data - '0');
+	___col += static_cast<size_type>(*_data - '0');
+	std::cout << "\x1b[36mcompute column [\x1b[0m" << ___col << "\x1b[36m]\x1b[0m" << std::endl;
 }
 
-/* count diagnostic */
-auto cs::parser::count_diagnostic(void) noexcept -> void {
-	_issue.message().push_back(*_data);
+// -- escape sequences --------------------------------------------------------
+
+/* handle escape */
+auto cs::parser::handle_escape(void) noexcept -> void {
+	std::cout << "HANDLE ESCAPE" << std::endl;
+	// complete buffer
+	(this->*_actions[_machine[_transition->_state][EOBUFF]._action])();
+	// save current state
+	_back = _transition->_state;
+	// set new state
+	_transition = &(_machine[WAIT_ESCAPE][EOBUFF]);
+}
+
+/* complete escape */
+auto cs::parser::complete_escape(void) noexcept -> void {
+
+	std::cout << "COMPLETE ESCAPE" << std::endl;
+	// info: when escape sequence is valid, terminated by 'm'
+
+	// back to previous state
+	_transition = &(_machine[_back][EOBUFF]);
 }
 
 
-/* throw exception */
-auto cs::parser::throw_exception(void) noexcept -> void {
-	std::cout << "error" << std::endl;
-}
 
-/* no action */
-auto cs::parser::no_action(void) noexcept -> void {
-	//std::cout << "no action" << std::endl;
-}
+auto in_word_set(const char* data, const unsigned int len) noexcept -> const char* {
 
-
-
-/* action */
-auto cs::parser::_action(___self& ___obj, const ___action_type ___act) noexcept -> void {
-
-	using ___action_proto = auto (parser::*)(void) noexcept -> void;
-
-	static constexpr ___action_proto _table[MAX_ACTION] = {
-
-		&___self::reset,
-		&___self::complete_issue,
-
-		&___self::add_path,
-		&___self::add_line,
-		&___self::add_column,
-		&___self::add_diagnostic,
-
-		&___self::count_path,
-		&___self::compute_line,
-		&___self::compute_column,
-		&___self::count_diagnostic,
-
-		&___self::throw_exception,
-		&___self::no_action,
+	enum : unsigned {
+		MIN_LEN  = 4,
+		MAX_LEN  = 11,
 	};
 
-	(___obj.*_table[___act])();
-}
-
-// -- private static methods --------------------------------------------------
-
-/* transition */
-auto cs::parser::_transition(const ___state_type ___st,
-						const ___char_type  ___ch) noexcept -> ___transition {
-
-	static constexpr ___transition _table[MAX_STATE][MAX_CHAR_TYPE] = {
-
-		// START
-		{
-			// CTRL
-			{ SKIP_LINE, RESET, "unexpected control character" },
-
-			// RETURN
-			{ IN_RETURN, NO_ACTION, nullptr },
-			// NEWLINE
-			{ START, RESET, nullptr }, // maybe not reset
-			// SPACE
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// NUMBER
-			{ IN_PATH, COUNT_PATH, nullptr },
-			// LETTER
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// COLON
-			{ SKIP_LINE, RESET, nullptr }, // no path ?
-			// DOT
-			{ IN_PATH, COUNT_PATH, nullptr },
-			// CIRCUMFLEX
-			{ IN_PATH, COUNT_PATH, nullptr },
-			// TILDE
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// OTHER
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// EXTEND
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-		},
-
-		// IN_RETURN
-		{
-			// CTRL
-			{ SKIP_LINE, RESET, "unexpected control character after return" },
-
-			// RETURN
-			{ IN_RETURN, NO_ACTION, nullptr },
-			// NEWLINE
-			{ START, COMPLETE_ISSUE, nullptr },
-			// SPACE
-			{ SKIP_LINE, RESET, "unexpected space after return" },
-
-			// NUMBER
-			{ SKIP_LINE, RESET, "unexpected digit after return" },
-			// LETTER
-			{ SKIP_LINE, RESET, "unexpected letter after return" },
-
-			// COLON
-			{ SKIP_LINE, RESET, "unexpected colon after return" },
-			// DOT
-			{ SKIP_LINE, RESET, "unexpected dot after return" },
-			// CIRCUMFLEX
-			{ SKIP_LINE, RESET, "unexpected circumflex after return" },
-			// TILDE
-			{ SKIP_LINE, RESET, "unexpected tilde after return" },
-
-			// OTHER
-			{ SKIP_LINE, RESET, "unexpected character after return" },
-
-			// EXTEND
-			{ SKIP_LINE, RESET, "unexpected extended character after return" },
-
-		},
-
-		// IN_PATH
-		{
-			// CTRL
-			{ SKIP_LINE, RESET, "unexpected control character in path" },
-
-			// RETURN
-			{ SKIP_LINE, RESET, nullptr },
-			// NEWLINE
-			{ START, RESET, nullptr },
-			// SPACE
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// NUMBER
-			{ IN_PATH, COUNT_PATH, nullptr },
-			// LETTER
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// COLON
-			{ IN_LINE, ADD_PATH, nullptr },
-			// DOT
-			{ IN_PATH, COUNT_PATH, nullptr },
-			// CIRCUMFLEX
-			{ IN_PATH, COUNT_PATH, nullptr },
-			// TILDE
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// OTHER
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-			// EXTEND
-			{ IN_PATH, COUNT_PATH, nullptr },
-
-		},
-
-		// IN_LINE
-		{
-			// CTRL
-			{ SKIP_LINE, RESET, "unexpected control character in line" },
-
-			// RETURN
-			{ SKIP_LINE, RESET, nullptr },
-			// NEWLINE
-			{ START, RESET, nullptr },
-			// SPACE
-			{ SKIP_LINE, RESET, nullptr },
-
-			// NUMBER
-			{ IN_LINE, COMPUTE_LINE, nullptr },
-			// LETTER
-			{ SKIP_LINE, RESET, nullptr },
-
-			// COLON
-			{ IN_COLUMN, ADD_LINE, nullptr },
-			// DOT
-			{ SKIP_LINE, RESET, nullptr },
-			// CIRCUMFLEX
-			{ SKIP_LINE, RESET, nullptr },
-			// TILDE
-			{ SKIP_LINE, RESET, nullptr },
-
-			// OTHER
-			{ SKIP_LINE, RESET, nullptr },
-
-			// EXTEND
-			{ SKIP_LINE, RESET, nullptr },
-
-		},
-
-		// IN_COLUMN
-		{
-			// CTRL
-			{ SKIP_LINE, RESET, "unexpected control character in column" },
-
-			// RETURN
-			{ SKIP_LINE, RESET, nullptr },
-			// NEWLINE
-			{ START, RESET, nullptr },
-			// SPACE
-			{ SKIP_LINE, RESET, nullptr },
-
-			// NUMBER
-			{ IN_COLUMN, COMPUTE_COLUMN, nullptr },
-			// LETTER
-			{ SKIP_LINE, RESET, nullptr },
-
-			// COLON
-			{ IN_DIAGNOSTIC, ADD_COLUMN, nullptr },
-			// DOT
-			{ SKIP_LINE, RESET, nullptr },
-			// CIRCUMFLEX
-			{ SKIP_LINE, RESET, nullptr },
-			// TILDE
-			{ SKIP_LINE, RESET, nullptr },
-
-			// OTHER
-			{ SKIP_LINE, RESET, nullptr },
-
-			// EXTEND
-			{ SKIP_LINE, RESET, nullptr },
-
-		},
-
-		// IN_DIAGNOSTIC
-		{
-			// CTRL
-			{ UNDEFINED, THROW_EXCEPTION, "unexpected control character in diagnostic" },
-
-			// RETURN
-			{ IN_RETURN, ADD_DIAGNOSTIC, nullptr },
-			// NEWLINE
-			{ START, COMPLETE_ISSUE, nullptr },
-			// SPACE
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-
-			// NUMBER
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-			// LETTER
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-
-			// COLON
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-			// DOT
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-			// CIRCUMFLEX
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-			// TILDE
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-
-			// OTHER
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-
-			// EXTEND
-			{ IN_DIAGNOSTIC, COUNT_DIAGNOSTIC, nullptr },
-		},
-
-		// SKIP_LINE
-		{
-			// CTRL
-			{ SKIP_LINE, NO_ACTION, nullptr },
-
-			// RETURN
-			{ SKIP_LINE, NO_ACTION, nullptr },
-			// NEWLINE
-			{ START, NO_ACTION, nullptr },
-			// SPACE
-			{ SKIP_LINE, NO_ACTION, nullptr },
-
-			// NUMBER
-			{ SKIP_LINE, NO_ACTION, nullptr },
-			// LETTER
-			{ SKIP_LINE, NO_ACTION, nullptr },
-
-			// COLON
-			{ SKIP_LINE, NO_ACTION, nullptr },
-			// DOT
-			{ SKIP_LINE, NO_ACTION, nullptr },
-			// CIRCUMFLEX
-			{ SKIP_LINE, NO_ACTION, nullptr },
-			// TILDE
-			{ SKIP_LINE, NO_ACTION, nullptr },
-
-			// OTHER
-			{ SKIP_LINE, NO_ACTION, nullptr },
-
-			// EXTEND
-			{ SKIP_LINE, NO_ACTION, nullptr },
-
-		},
-
+	static constexpr unsigned char _table[] {
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12,  0,  0, 12, 12,  5, 12, 12, 12, 12,
+		 0, 12, 12, 12, 12, 12, 12, 12, 12,  0,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12, 12, 12, 12, 12,
+		12, 12, 12, 12, 12, 12
 	};
 
-	return _table[___st][___ch];
-}
-
-
-/* char type */
-auto cs::parser::_chartype(const char ___ch) noexcept -> ___char_type {
-
-	static constexpr ___char_type _table[256] = {
-
-		CTRL, CTRL, CTRL, CTRL, CTRL, CTRL, CTRL, CTRL,
-		CTRL, CTRL,
-		NEWLINE,
-		CTRL, CTRL,
-		RETURN,
-		CTRL, CTRL, CTRL, CTRL, CTRL, CTRL, CTRL, CTRL,
-		CTRL, CTRL, CTRL, CTRL, CTRL, CTRL, CTRL, CTRL,
-		CTRL, CTRL,
-		SPACE,
-		OTHER, OTHER, OTHER, OTHER, OTHER, OTHER, OTHER, OTHER,
-		OTHER, OTHER, OTHER, OTHER, OTHER,
-		DOT,
-		OTHER,
-		NUMBER, NUMBER, NUMBER, NUMBER, NUMBER, NUMBER, NUMBER, NUMBER,
-		NUMBER, NUMBER,
-		COLON,
-		OTHER, OTHER, OTHER, OTHER, OTHER, OTHER,
-		LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER,
-		LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER,
-		LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER,
-		LETTER, LETTER,
-		OTHER, OTHER, OTHER,
-		CIRCUMFLEX,
-		OTHER, OTHER,
-		LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER,
-		LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER,
-		LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER, LETTER,
-		LETTER, LETTER,
-		OTHER, OTHER, OTHER,
-		TILDE,
-		CTRL,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
-		EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND, EXTEND,
+	static const char* _map[] {
+		"", "", "", "",
+		"note",
+		"error",
+		"",
+		"warning",
+		"",
+		"info",
+		"",
+		"fatal error"
 	};
 
-	return _table[static_cast<unsigned char>(___ch)];
+	if (len > MAX_LEN || len < MIN_LEN)
+		return 0;
+
+	const unsigned key = len + _table[(unsigned char)data[0U]];
+
+	if (key > MAX_LEN)
+		return 0;
+
+	const char* s = _map[key];
+
+	if (*data == *s && !__builtin_strcmp(data + 1, s + 1))
+		return s;
+
+	return 0;
 }
+
+
+
+
+
+
 
 #endif // ___cs_requirements
