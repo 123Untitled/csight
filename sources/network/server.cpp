@@ -41,7 +41,10 @@ cs::server::server(const ::in_port_t ___port)
 	// listen
 	cs::listen(_socket, 1);
 
-	std::cout << "\x1b[32mserver listening on port " << ___port << "\x1b[0m" << std::endl;
+	// ansi hyperlinks localhost:port
+	std::string port{std::to_string(___port)};
+	std::string link{"http://localhost:" + port};
+	std::cout << "\x1b[32mserver listening on:\x1b[0m \x1b]8;;" << link << "\x1b\\" << link << "\x1b]8;;\x1b\\" << std::endl;
 
 }
 
