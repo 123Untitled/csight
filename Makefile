@@ -104,6 +104,7 @@ override RM := rm -vfr
 # -- C O M P I L E R ----------------------------------------------------------
 
 # compiler
+#override CXX := $(shell which g++)
 override CXX := $(shell which clang++)
 #override CXX := /opt/homebrew/Cellar/llvm/18.1.4/bin/clang++
 #override CXX := /opt/homebrew/Cellar/gcc/13.2.0/bin/g++-13
@@ -197,9 +198,10 @@ $(EXEC): $(OBJS)
 	$(CXX) -c $< -o $@ $(PCH_INCLUDES) $(CXXFLAGS) $(DEPFLAGS)
 	$(eval NSRC := $(shell echo $$(($(NSRC) + 1))))
 
+
 %.pch: %.hpp Makefile
 	echo '\033[35mpch\033[0m' $@
-	$(CXX) $(CXXFLAGS) -x c++-header $< -o $@
+	$(CXX) $(CXXFLAGS) -x c++-header -o $@ $<
 	$(eval NHDR := $(shell echo $$(($(NHDR) + 1))))
 
 $(COMPILE_DB): $(SRCS) Makefile
