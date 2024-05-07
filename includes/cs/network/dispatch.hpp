@@ -100,6 +100,9 @@ namespace cs {
 			/* remove */
 			static auto remove(cs::io_event&) -> void;
 
+			/* disable */
+			static auto disable(cs::io_event&) -> void;
+
 			/* run */
 			static auto run(void) -> void;
 
@@ -161,6 +164,9 @@ namespace cs {
 
 			/* remove */
 			auto _remove(cs::io_event&) -> void;
+
+			/* disable */
+			auto _disable(cs::io_event&) -> void;
 
 			/* run */
 			auto _run(void) -> void;
