@@ -5,6 +5,10 @@
 #if ___cs_requirements
 
 #include "cs/io_event.hpp"
+#include "cs/system/descriptor.hpp"
+#include "cs/core/parser.hpp"
+#include "cs/containers/list.hpp"
+
 #include <termios.h>
 
 
@@ -27,6 +31,15 @@ namespace cs {
 
 
 			// -- private members ---------------------------------------------
+
+			/* stdin */
+			cs::descriptor _stdin;
+
+			/* parser */
+			cs::parser _parser;
+
+			/* issues */
+			cs::list<cs::issue> _issues;
 
 			/* terminal attributes */
 			struct termios _term;
