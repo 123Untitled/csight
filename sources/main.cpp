@@ -18,6 +18,8 @@
 
 //#include "cs/containers/array.hpp"
 
+#include "cs/containers/pair.hpp"
+
 #include <unistd.h>
 #include <termios.h>
 #include <fcntl.h>
@@ -41,48 +43,23 @@ void signal_handler(int sig) {
 #if ___cs_requirements
 int main(int ac, char** av) {
 
-	cs::hashmap<cs::string, cs::string> ___lst;
-
-	cs::string_view k[] = {
-		cs::string_view{"one"},
-		cs::string_view{"two"},
-		cs::string_view{"three"},
-		cs::string_view{"four"},
-		cs::string_view{"five"},
-		cs::string_view{"six"},
-		cs::string_view{"seven"},
-		cs::string_view{"eight"},
-		cs::string_view{"nine"},
-		cs::string_view{"ten"}
-	};
-
-	cs::string_view v[] = {
-		cs::string_view{"1"},
-		cs::string_view{"2"},
-		cs::string_view{"3"},
-		cs::string_view{"4"},
-		cs::string_view{"5"},
-		cs::string_view{"6"},
-		cs::string_view{"7"},
-		cs::string_view{"8"},
-		cs::string_view{"9"},
-		cs::string_view{"10"}
-	};
+	using map = cs::hashmap<cs::string, float>;
+	map ___map;
 
 
-	cs::string a, b, c, d;
-
-	a.append("one");
-	b.append("two");
-	c.append("three");
-	d.append("four");
+	cs::string k;
+	k.append("hello");
+	cs::string k2;
+	k2.append("world");
 
 
-	___lst.insert(a, b);
+	___map[cs::move(k)] =  3.14f;
+	___map[cs::move(k2)] = 2.71f;
 
-	//___lst.for_each([](const cs::string_view& k, const cs::string_view& v) {
-	//	std::cout << k << " -> " << v << std::endl;
-	//});
+	___map.for_each([](const map::value_type& p) {
+		std::cout << cs::get<const cs::string>(p) << " -> " << cs::get<float>(p) << std::endl;
+	});
+
 
 	return 0;
 
