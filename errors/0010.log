@@ -1,0 +1,48 @@
+[32m
+  ░▒▓██████▓▒░ ░▒▓███████▓▒░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░
+ ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░    
+ ░▒▓█▓▒░      ░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░    
+ ░▒▓█▓▒░       ░▒▓██████▓▒░░▒▓█▓▒░▒▓█▓▒▒▓███▓▒░▒▓████████▓▒░  ░▒▓█▓▒░    
+ ░▒▓█▓▒░             ░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░    
+ ░▒▓█▓▒░░▒▓█▓▒░      ░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░    
+  ░▒▓██████▓▒░░▒▓███████▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░  ░▒▓█▓▒░    
+ [0m
+
+[33mobj[0m sources/main.o
+In file included from sources/main.cpp:21:
+[1mincludes/cs/containers/pair.hpp:82:6: [0m[0;1;31merror: [0m[1mcall to deleted constructor of 'first_type' (aka 'const cs::string')[0m
+                        : _first{cs::move(___f)}, _second{cs::move(___s)} {
+[0;1;32m                          ^     ~~~~~~~~~~~~~~~~
+[0m[1mincludes/cs/containers/hashmap.hpp:180:7: [0m[0;1;30mnote: [0min instantiation of member function 'cs::pair<const cs::string, float>::pair' requested here[0m
+                                                cs::pair<const key_type, mapped_type>(
+[0;1;32m                                                ^
+[0m[1msources/main.cpp:51:9: [0m[0;1;30mnote: [0min instantiation of function template specialization 'cs::hashmap<cs::string, float>::insert<float>' requested here[0m
+        ___map.insert(cs::move(k), 3.14f);
+[0;1;32m               ^
+[0m[1mincludes/cs/string.hpp:104:4: [0m[0;1;30mnote: [0m'string' has been explicitly marked deleted here[0m
+                        string(const ___self&) = delete;
+[0;1;32m                        ^
+[0mIn file included from sources/main.cpp:21:
+[1mincludes/cs/containers/pair.hpp:89:20: [0m[0;1;31merror: [0m[1mcall to implicitly-deleted copy constructor of 'second_type' (aka 'cs::pair<const cs::string, float>')[0m
+                        : _first{___f}, _second{cs::move(___s)} {
+[0;1;32m                                        ^      ~~~~~~~~~~~~~~~~
+[0m[1mincludes/cs/memory/lifecycle.hpp:79:24: [0m[0;1;30mnote: [0min instantiation of member function 'cs::pair<const unsigned long, cs::pair<const cs::string, float>>::pair' requested here[0m
+                                ::new((void*)___p) value_type{cs::forward<___params>(___args)...};
+[0;1;32m                                                   ^
+[0m[1mincludes/cs/containers/hashmap.hpp:178:29: [0m[0;1;30mnote: [0min instantiation of function template specialization 'cs::lifecycle<cs::pair<const unsigned long, cs::pair<const cs::string, float>>>::construct<const unsigned long &, cs::pair<const cs::string, float>>' requested here[0m
+                                cs::lifecycle<___node>::construct(_data[index],
+[0;1;32m                                                        ^
+[0m[1msources/main.cpp:51:9: [0m[0;1;30mnote: [0min instantiation of function template specialization 'cs::hashmap<cs::string, float>::insert<float>' requested here[0m
+        ___map.insert(cs::move(k), 3.14f);
+[0;1;32m               ^
+[0m[1mincludes/cs/containers/pair.hpp:60:14: [0m[0;1;30mnote: [0mexplicitly defaulted function was implicitly deleted here[0m
+                        constexpr pair(const ___self&)
+[0;1;32m                                  ^
+[0m[1mincludes/cs/containers/pair.hpp:44:15: [0m[0;1;30mnote: [0mcopy constructor of 'pair<const cs::string, float>' is implicitly deleted because field '_first' has a deleted copy constructor[0m
+                        first_type _first;
+[0;1;32m                                   ^
+[0m[1mincludes/cs/string.hpp:104:4: [0m[0;1;30mnote: [0m'string' has been explicitly marked deleted here[0m
+                        string(const ___self&) = delete;
+[0;1;32m                        ^
+[0m2 errors generated.
+gmake: *** [Makefile:197: sources/main.o] Error 1
