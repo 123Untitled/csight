@@ -9,8 +9,10 @@
 #include "cs/type_traits/move.hpp"
 #include "cs/type_traits/forward.hpp"
 #include "cs/type_traits/declval.hpp"
+#include "cs/diagnostics/exception_guard.hpp"
 #include "cs/memory/lifecycle.hpp"
 #include "cs/string.hpp"
+#include "cs/containers/pair.hpp"
 
 
 // -- C S  N A M E S P A C E --------------------------------------------------
@@ -81,107 +83,55 @@ namespace cs {
 			/* mapped type */
 			using mapped_type = ___value;
 
+			/* value type */
+			using value_type = cs::pair<const ___key, ___value>;
+
 			/* size type */
 			using size_type = cs::size_t;
 
 
 		private:
 
-			// -- private structs ---------------------------------------------
-
-			/* node */
-			class ___node final {
-
-
-				private:
-
-					// -- private members -------------------------------------
-
-					/* hash */
-					const size_type _hash;
-
-					/* key */
-					key_type _key;
-
-					/* value */
-					mapped_type _value;
-
-
-				public:
-
-					// -- public lifecycle ------------------------------------
-
-					/* default constructor */
-					___node(void) noexcept /* noexcept default constructible */ = default;
-
-					/* members constructor */
-					template <typename... ___params>
-					___node(const size_type ___hs, const key_type& ___ke, ___params&&... ___args)
-					/* noexcept key move construct, value construct */
-					: _hash{___hs}, _key{___ke}, _value{cs::forward<___params>(___args)...} {
-					}
-
-					/* members move constructor */
-					template <typename... ___params>
-					___node(const size_type ___hs, key_type&& ___ke, ___params&&... ___args)
-					/* noexcept key move construct, value construct */
-					: _hash{___hs}, _key{cs::move(___ke)}, _value{cs::forward<___params>(___args)...} {
-					}
-
-					/* deleted copy constructor */
-					___node(const ___node&) = delete;
-
-					/* deleted move constructor */
-					___node(___node&&) = delete;
-
-					/* destructor */
-					~___node(void) noexcept = default;
-
-
-					// -- public assignment operators -------------------------
-
-					/* deleted copy assignment operator */
-					auto operator=(const ___node&) -> ___node& = delete;
-
-					/* deleted move assignment operator */
-					auto operator=(___node&&) -> ___node& = delete;
-
-
-					// -- public accessors ------------------------------------
-
-					/* hash */
-					auto hash(void) const noexcept -> size_type {
-						return _hash;
-					}
-
-					/* key */
-					auto key(void) const noexcept -> const key_type& {
-						return _key;
-					}
-
-					/* value */
-					auto value(void) noexcept -> mapped_type& {
-						return _value;
-					}
-
-					/* const value */
-					auto value(void) const noexcept -> const mapped_type& {
-						return _value;
-					}
-
-			}; // class ___node
-
-
 			// -- private types -----------------------------------------------
 
-			/* pointer type */
-			using pointer = ___node*;
+			/* wrapper */
+			struct wrapper final {
+
+				// -- members -------------------------------------------------
+
+				/* hash */
+				const size_type _hash;
+
+				/* value */
+				value_type _pair;
+
+
+				// -- lifecycle -----------------------------------------------
+
+				/* emplace constructor */
+				template <typename... ___params>
+				wrapper(size_type ___hs, ___params&&... ___args)
+				: _hash{___hs},
+				  _pair{cs::forward<___params>(___args)..., mapped_type{}} {
+				}
+
+				/* non-copyable */
+				___cs_not_copyable(wrapper);
+
+				/* non-moveable */
+				___cs_not_moveable(wrapper);
+
+				/* destructor */
+				~wrapper(void) noexcept = default;
+
+			}; // struct wrapper
+
 
 
 			// -- private data ------------------------------------------------
 
 			/* data */
-			pointer* _data;
+			wrapper** _data;
 
 			/* size */
 			size_type _size;
@@ -207,7 +157,7 @@ namespace cs {
 
 			/* default constructor */
 			hashmap(void)
-			: _data{cs::calloc<___node*>(DEFAULT_SIZE)},
+			: _data{cs::calloc<wrapper*>(DEFAULT_SIZE)},
 			  _size{0U},
 			  _capacity{DEFAULT_SIZE} {
 			}
@@ -227,8 +177,9 @@ namespace cs {
 			// -- public modifiers --------------------------------------------
 
 			/* insert */
-			template <typename... ___params>
-			auto insert(const key_type& ___ky, ___params&&... ___args) -> void {
+			//template <typename... ___params>
+			//auto insert(key_type&& ___ky, ___params&&... ___args) -> void {
+			auto operator[](key_type&& ___ky) -> mapped_type& {
 
 				// check if size is full
 				if (_need_resize() == true)
@@ -242,26 +193,46 @@ namespace cs {
 				for (size_type q = 1U; _data[index] != nullptr; ++q) {
 
 					// check hash and file exists
-					if (_data[index]->hash() == hash
-					 && _data[index]->key() == ___ky) {
-						// update value
-						//_data[index]->value() = mapped_type{cs::forward<___params>(___args)...};
-						return; }
+					if (_data[index]->_hash == hash
+					 && cs::get<const key_type>(_data[index]->_pair) == ___ky)
+						return cs::get<mapped_type>(_data[index]->_pair);
 
 					// quadratic probing
 					index = (index + (q * q)) % _capacity;
 				}
 
 				// allocate new node
-				_data[index] = cs::malloc<___node>();
+				_data[index] = cs::malloc<wrapper>();
 
-				// construct node
-				cs::lifecycle<___node>::construct(_data[index],
-						hash, cs::forward<key_type>(___ky),
-							  cs::forward<___params>(___args)...);
+				if constexpr (std::is_nothrow_constructible<wrapper, size_type, key_type>::value) {
+
+					// construct node
+					cs::lifecycle<wrapper>::construct(_data[index],
+							hash,
+							cs::move(___ky)
+					);
+				}
+				else {
+					cs::exception_guard guard{[&] {
+						cs::free(_data[index]);
+						_data[index] = nullptr;
+					}};
+
+					// construct node
+					cs::lifecycle<wrapper>::construct(_data[index],
+							hash,
+							cs::move(___ky)
+					);
+
+					// release guard
+					guard.complete();
+				}
 
 				// increment size
 				++_size;
+
+				// return reference
+				return cs::get<mapped_type>(_data[index]->_pair);
 			}
 
 			/* for each */
@@ -269,35 +240,36 @@ namespace cs {
 			auto for_each(___fn&& ___fu, ___params&&... ___args)
 
 				// check noexcept function
-				noexcept(noexcept(___fu(cs::declval<key_type&>(),
-										cs::declval<mapped_type&>(),
+				noexcept(noexcept(___fu(cs::declval<value_type&>(),
 										cs::declval<___params>()...))) -> void {
 
 				// loop over data
 				for (size_type i = 0U; i < _capacity; ++i) {
 					// call if not null
 					if (_data[i] != nullptr)
-						___fu((_data[i])->key(),
-							  (_data[i])->value(),
-							   cs::forward<___params>(___args)...); }
+						___fu(_data[i]->_pair,
+							   cs::forward<___params>(___args)...);
+				}
 			}
 
 			/* const for each */
-			//template <typename ___fn, typename... ___params>
-			//auto for_each(___fn&& ___fu, ___params&&... ___args) const
-			//
-			//	// check noexcept function
-			//	noexcept(noexcept(___fu(
-			//					cs::declval<mapped_type>(),
-			//					cs::declval<___params>()...))) -> void {
-			//
-			//		// loop over data
-			//		for (size_type i = 0U; i < _capacity; ++i) {
-			//			// call if not null
-			//			if (_data[i] != nullptr)
-			//				___fu((_data[i])->entry(),
-			//						cs::forward<___params>(___args)...); }
-			//	}
+			template <typename ___fn, typename... ___params>
+			auto for_each(___fn&& ___fu, ___params&&... ___args) const
+
+				// check noexcept function
+				noexcept(noexcept(___fu(
+								cs::declval<const value_type&>(),
+								cs::declval<___params>()...))) -> void {
+
+					// loop over data
+					for (size_type i = 0U; i < _capacity; ++i) {
+						// call if not null
+						if (_data[i] != nullptr)
+							___fu(_data[i]->_pair,
+								  cs::forward<___params>(___args)...);
+					}
+
+			}
 
 
 		private:
@@ -311,7 +283,7 @@ namespace cs {
 				const auto ___cp = (_capacity << 1U) + 1U; // odd
 
 				// allocate zeroed memory
-				auto ___new = cs::calloc<___node*>(___cp);
+				auto ___new = cs::calloc<wrapper*>(___cp);
 
 				// re-hash map
 				for (size_type i = 0U; i < _capacity; ++i) {
@@ -320,7 +292,7 @@ namespace cs {
 						continue;
 
 					// hash key
-					auto idx = _data[i]->hash() % ___cp;
+					auto idx = _data[i]->_hash % ___cp;
 
 					// find empty slot
 					for (size_type q = 1U; ___new[idx] != nullptr; ++q) {
@@ -354,8 +326,8 @@ namespace cs {
 			
 			auto _clear(void) noexcept {
 
-				___node**  it = _data;
-				___node** end = it + _capacity;
+				wrapper**  it = _data;
+				wrapper** end = it + _capacity;
 
 				// free data
 				for (;it != end; ++it) {
@@ -365,7 +337,7 @@ namespace cs {
 						continue;
 
 					// destruct node
-					cs::lifecycle<___node>::destroy(*it);
+					cs::lifecycle<wrapper>::destroy(*it);
 					// free node
 					cs::free(*it);
 				}
