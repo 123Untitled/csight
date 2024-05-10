@@ -52,7 +52,7 @@ int main(int ac, char** av) {
 
 
 
-	int iterations = 100000;
+	int iterations = 1000000;
 
 	// get time
 	auto start = std::chrono::high_resolution_clock::now();
