@@ -21,6 +21,27 @@ namespace cs {
 
 	/* hash */
 	inline auto hash_(const cs::string& ___vl) noexcept -> cs::size_t {
+
+		// jenkins one at a time hash
+		cs::size_t hash = 0U;
+
+		auto it = ___vl.data();
+		auto end = it + ___vl.size();
+
+
+		for (; it != end; ++it) {
+			hash += static_cast<unsigned char>(*it);
+			hash += hash << 10U;
+			hash ^= hash >> 6U;
+		}
+		hash += hash << 3U;
+		hash ^= hash >> 11U;
+		hash += hash << 15U;
+		return hash;
+	}
+
+	/* hash */
+	inline auto hash_(const std::string& ___vl) noexcept -> cs::size_t {
 		// jenkins one at a time hash
 		cs::size_t hash = 0U;
 
@@ -192,6 +213,8 @@ namespace cs {
 				// find empty slot
 				for (size_type q = 1U; _data[index] != nullptr; ++q) {
 
+					//std::cout << "collision: " << index << std::endl;
+
 					// check hash and file exists
 					if (_data[index]->_hash == hash
 					 && cs::get<const key_type>(_data[index]->_pair) == ___ky)
@@ -280,7 +303,7 @@ namespace cs {
 			auto _resize(void) {
 
 				// compute new capacity
-				const auto ___cp = (_capacity << 1U) + 1U; // odd
+				const auto ___cp = (_capacity << 1U);// + 1U; // odd
 
 				// allocate zeroed memory
 				auto ___new = cs::calloc<wrapper*>(___cp);

@@ -40,25 +40,58 @@ void signal_handler(int sig) {
 	std::cout << "\x1b[1;31m\n\nSIGINT received\n\n\x1b[0m" << std::endl;
 }
 
+#include <string>
+#include <chrono>
+#include <unordered_map>
+
 #if ___cs_requirements
 int main(int ac, char** av) {
 
-	using map = cs::hashmap<cs::string, float>;
-	map ___map;
+	using cmap = cs::hashmap<std::string, std::string>;
+	using smap = std::unordered_map<std::string, std::string>;
 
 
-	cs::string k;
-	k.append("hello");
-	cs::string k2;
-	k2.append("world");
+
+	int iterations = 100000;
+
+	// get time
+	auto start = std::chrono::high_resolution_clock::now();
+	{
+		cmap cm;
+
+		for (int i = 0; i < iterations; ++i) {
+			cm["key" + std::to_string(i)] = "value" + std::to_string(i);
+		}
+	}
+	auto end = std::chrono::high_resolution_clock::now();
+
+	auto duration1 = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+	std::cout << "cmap: " << duration1.count() << std::endl;
+
+	// get time
+	start = std::chrono::high_resolution_clock::now();
+	{
+		smap sm;
+
+		std::cout << "capacity: " << sm.bucket_count() << std::endl;
+
+		for (int i = 0; i < iterations; ++i) {
+			sm["key" + std::to_string(i)] = "value" + std::to_string(i);
+		}
+		end = std::chrono::high_resolution_clock::now();
+	}
+
+	auto duration2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+
+	std::cout << "smap: " << duration2.count() << std::endl;
 
 
-	___map[cs::move(k)] =  3.14f;
-	___map[cs::move(k2)] = 2.71f;
 
-	___map.for_each([](const map::value_type& p) {
-		std::cout << cs::get<const cs::string>(p) << " -> " << cs::get<float>(p) << std::endl;
-	});
+
+
+
+
 
 
 	return 0;
