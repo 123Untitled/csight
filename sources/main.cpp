@@ -158,7 +158,7 @@ int main(int ac, char** av) {
 		});
 
 		//m.debug();
-		//return 0;
+		return 0;
 
 
 		cs::generate_json(m);
