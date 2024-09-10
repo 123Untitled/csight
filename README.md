@@ -47,6 +47,3 @@ Options:
   -a, --auto            Automatically open the browser
   -f, --forward         Forward the original compiler output
 ```
-
-
-
