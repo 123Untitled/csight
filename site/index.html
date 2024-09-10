@@ -113,37 +113,6 @@
 					console.error('There has been a problem with your fetch operation:', error);
 				});
 
-				//document.addEventListener("DOMContentLoaded", function() {
-				//
-				//	var   labels = document.querySelectorAll('.wrapper label');
-				//	var contents = document.querySelectorAll('.wrapper .content');
-				//
-				//	labels.forEach(function(label) {
-				//
-				//		label.addEventListener('mouseenter', function() {
-				//
-				//			// close all contents
-				//			contents.forEach(function(content) {
-				//				content.style.maxHeight = null;
-				//			});
-				//
-				//			// open the hovered content
-				//			var content = label.nextElementSibling;
-				//			if (content.style.maxHeight) {
-				//				content.style.maxHeight = null;
-				//			}
-				//			else {
-				//				content.style.maxHeight = content.scrollHeight + "px";
-				//			}
-				//
-				//		}); // label.addEventListener
-				//
-				//	}); // labels.forEach
-				//
-				//}); // DOMContentLoaded
-
-
-
 				// close server connection if user leaves the page
 				window.addEventListener('beforeunload', function() {
 					//navigator.sendBeacon('/close');

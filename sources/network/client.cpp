@@ -3,62 +3,92 @@
 #include "cs/type_traits/move.hpp"
 #include "cs/hint.hpp"
 #include "cs/reader.hpp"
+#include "cs/string.hpp"
+#include "cs/system/open.hpp"
+#include "cs/system/write.hpp"
 
 #include <iostream>
-#include <string>
-#include <fstream>
-#include <sstream>
-
-// tmp: to be implemented in another file
-auto read_file(const std::string& path) -> std::string {
-	std::ifstream file(path);
-	if (file) {
-		std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-		file.close();
-		return content;
-	}
-	return "";
-}
-
-//static constexpr const char* files[] {
-//	"/",
-//	"/style.css",
-//	"/issues.json",
-//};
-
 
 
 // tmp: to be implemented in another file
-auto cs::client::serve_file(const std::string& path,
-							const std::string& content_type) -> void {
+auto read_file(const cs::string& path) -> cs::string {
 
-	std::string content = read_file(path);
+	// open file
+	auto fd = cs::open(path, O_RDONLY);
 
+	cs::string content;
 
-	if (content.empty()) {
-		std::cout << "404 Not Found" << std::endl;
-		content = "HTTP/1.1 404 Not Found\n\n404 Not Found";
-	}
+	// get file size
+	const auto size = cs::file_size(fd);
 
-	else {
-		std::stringstream response;
-		// 200 OK
-		response << "HTTP/1.1 200 OK\n";
-		// Content-Type
-		response << "Content-Type: " << content_type << "\n";
-		// cache-control
-		response << "Cache-Control: no-cache, no-store, must-revalidate\n";
-		// Content-Length
-		response << "Content-Length: " << content.size() << "\n\n";
-		// Connection: close (
-		//response << "Connection: close\n\n";
-		response << content;
-		content = response.str();
-	}
+	// read file
+	content.resize(size);
 
-	::write(_socket, content.data(), content.size());
+	// read file
+	const auto ___ret = ::read(fd, content.data(), size);
+
+	if (___ret == -1 || static_cast<cs::size_t>(___ret) != size)
+		throw cs::runtime_error("failed to read file");
+
+	return content;
 }
 
+
+namespace cs{
+
+namespace http {
+
+
+	struct text_html {
+		static constexpr cs::string_view view{"text/html"};
+	};
+
+	struct text_css {
+		static constexpr cs::string_view view{"text/css"};
+	};
+
+	struct application_json {
+		static constexpr cs::string_view view{"application/json"};
+	};
+
+
+
+	// tmp: to be implemented in another file
+	template <typename ___content_type>
+	auto serve(const cs::socket& ___so,
+			   const cs::string& path) -> void {
+
+		const cs::string content = read_file(path);
+
+		cs::string resp;
+
+		if (content.empty()) {
+			cs::write(___so, "HTTP/1.1 404 Not Found\n\n404 Not Found");
+			return;
+		}
+
+		resp.append(
+				// 200 OK
+				"HTTP/1.1 200 OK\r\n",
+				// Content-Type
+				"Content-Type: ", ___content_type::view, "\r\n",
+				// cache-control
+				"Cache-Control: no-cache, no-store, must-revalidate\r\n",
+				// Content-Length
+				"Content-Length: ", content.size(), "\r\n",
+				// Connection: close
+				"Connection: close\r\n\r\n",
+				// content
+				content
+		);
+
+		// send response
+		cs::write(___so, resp);
+	}
+
+} // namespace http
+
+} // namespace cs
 
 
 // -- public lifecycle --------------------------------------------------------
@@ -77,14 +107,11 @@ auto cs::client::read(void) -> void {
 
 	cs::hint::info("reading from client");
 
-	// new reader
+	// new buffer
 	cs::reader<BUFFER_SIZE> reader;
 
 	// read from socket
 	reader.read(_socket);
-
-	//::write(STDOUT_FILENO, reader.data(), reader.size());
-	//::write(STDOUT_FILENO, "\n", 1U);
 
 	// check for disconnection
 	if (reader.empty()) {
@@ -93,35 +120,16 @@ auto cs::client::read(void) -> void {
 		return;
 	}
 
-	// parse request
+	// parse buffer
 	_parser.parse(_request, reader);
 
-	if (_parser.complete()) {
-		//_request.print();
+	if (not _parser.complete())
+		return;
 
-		if (_request.method().type() == cs::http::method::GET) {
-			std::string req{_request.method().uri().data(), _request.method().uri().size()};
-			if (req == "/") {
-				std::string path = "site/index.html";
-				serve_file(path, "text/html");
-			}
-			else if (req == "/style.css") {
-				std::string path = "site/style.css";
-				serve_file(path, "text/css");
-			}
-			else if (req == "/issues.json") {
-				std::cout << "sending issues.json" << std::endl;
-				std::string path = "site/issues.json";
-				serve_file(path, "application/json");
-			}
-			else {
-				std::string content = "HTTP/1.1 404 Not Found\n\n404 Not Found";
-				::write(_socket, content.data(), content.size());
-			}
-		}
-		_request.clear();
-		_parser.clear();
-	}
+	___self::_handle_request();
+
+	_request.clear();
+	_parser.clear();
 }
 
 /* send */
@@ -133,3 +141,35 @@ auto cs::client::send(void) -> void {
 auto cs::client::descriptor(void) const noexcept -> int {
 	return _socket;
 }
+
+
+// -- private methods ---------------------------------------------------------
+
+/* handle request */
+auto cs::client::_handle_request(void) -> void {
+
+	if (_request.method().type() != cs::http::method::GET)
+		return;
+
+	std::string req{_request.method().uri().data(), _request.method().uri().size()};
+
+	using namespace cs;
+
+	if (req == "/") {
+		http::serve<http::text_html>(
+				_socket, cs::string{"site/index.html"});
+	}
+	else if (req == "/style.css") {
+		http::serve<http::text_css>(
+				_socket, cs::string{"site/style.css"});
+	}
+	else if (req == "/issues.json") {
+		http::serve<http::application_json>(
+				_socket, cs::string{"site/issues.json"});
+
+	}
+	else {
+		cs::write(_socket, "HTTP/1.1 404 Not Found\n\n404 Not Found");
+	}
+}
+

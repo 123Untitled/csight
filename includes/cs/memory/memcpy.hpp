@@ -5,6 +5,8 @@
 
 #if ___cs_requirements
 
+#include "cs/types.hpp"
+
 #if !__has_builtin(__builtin_memcpy)
 #define CS_USE_SYSTEM_MEMCPY
 #include <string.h>
@@ -20,7 +22,7 @@ namespace cs {
 
 	/* memcpy */
 	template <typename ___type>
-	auto memcpy(___type* ___dst, const ___type* ___src, const decltype(sizeof(0)) ___sz) noexcept -> void {
+	auto memcpy(___type* ___dst, const ___type* ___src, const cs::size_t ___sz) noexcept -> void {
 
 		#if defined(CS_USE_SYSTEM_MEMCPY)
 			static_cast<void>(::memcpy(___dst, ___src, ___sz * sizeof(___type)));

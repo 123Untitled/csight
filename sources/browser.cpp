@@ -17,12 +17,10 @@ auto cs::open_browser(const ::in_port_t ___port) -> void {
 	// search path in env PATH
 
 	// fork
-	::pid_t pid = ::fork();
+	const ::pid_t pid = ::fork();
 
-	if (pid == -1) {
-		perror("fork");
+	if (pid == -1)
 		throw cs::runtime_error{"failed to fork"};
-	}
 
 	// child
 	if (pid == 0) {

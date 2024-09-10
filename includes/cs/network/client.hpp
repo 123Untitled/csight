@@ -8,6 +8,7 @@
 #include "cs/io_event.hpp"
 #include "cs/http/parser.hpp"
 #include "cs/http/request.hpp"
+#include "cs/string.hpp"
 
 
 #include <string>
@@ -96,17 +97,11 @@ namespace cs {
 
 		private:
 
-
 			// -- private methods ---------------------------------------------
 
-			/* receive */
-			auto _receive(char (&)[BUFFER_SIZE]) -> ___size;
+			/* handle request */
+			auto _handle_request(void) -> void;
 
-			/* serve file */
-			auto serve_file(const std::string&,
-					        const std::string&) -> void;
-
-			auto serve_index(void) -> void;
 
 	}; // class client
 

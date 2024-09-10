@@ -5,6 +5,7 @@
 #if ___cs_requirements
 
 #include <fcntl.h>
+#include <sys/stat.h>
 #include "cs/system/descriptor.hpp"
 #include "cs/diagnostics/exception.hpp"
 #include "cs/string.hpp"
@@ -34,6 +35,19 @@ namespace cs {
 	template <typename... ___params>
 	auto open(const cs::string& ___path, const ___params&... ___args) -> cs::descriptor {
 		return cs::open(___path.data(), ___args...);
+	}
+
+	/* file size */
+	inline auto file_size(const cs::descriptor& ___desc) -> cs::size_t {
+
+		// get file size
+		struct ::stat ___st;
+
+		if (::fstat(___desc, &___st) == -1)
+			throw cs::runtime_error("failed to get file size");
+
+		// return file size
+		return static_cast<cs::size_t>(___st.st_size);
 	}
 
 } // namespace cs
