@@ -17,7 +17,7 @@ namespace cs {
 
 	// -- U N I Q U E  P T R --------------------------------------------------
 
-	/* shared pointer */
+	/* unique pointer */
 	template <typename ___type>
 	class unique_ptr final {
 

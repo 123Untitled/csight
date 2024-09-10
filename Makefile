@@ -89,7 +89,7 @@ override PCHS := $(HDRS:%.hpp=%.pch)
 override INCS := $(shell find $(INC_DIR) -mindepth 1 -type d)
 
 # log files
-override LOGS := $(OBJS:%.o=%.log)
+#override LOGS := $(OBJS:%.o=%.log)
 
 
 # -- T O O L S ----------------------------------------------------------------
@@ -104,10 +104,7 @@ override RM := rm -vfr
 # -- C O M P I L E R ----------------------------------------------------------
 
 # compiler
-#override CXX := $(shell which g++)
 override CXX := $(shell which clang++)
-#override CXX := /opt/homebrew/Cellar/llvm/18.1.4/bin/clang++
-#override CXX := /opt/homebrew/Cellar/gcc/13.2.0/bin/g++-13
 
 # compiler standard
 override STD := -std=c++2a

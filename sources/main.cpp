@@ -95,6 +95,55 @@ int main(int ac, char** av) {
 
 
 	return 0;
+	//using cmap = cs::hashmap<std::string, std::string>;
+	//using smap = std::unordered_map<std::string, std::string>;
+	//
+	//
+	//
+	//int iterations = 1000000;
+	//
+	//// get time
+	//auto start = std::chrono::high_resolution_clock::now();
+	//{
+	//	cmap cm;
+	//
+	//
+	//	for (int i = 0; i < iterations; ++i) {
+	//		cm["key" + std::to_string(i)] = "value" + std::to_string(i);
+	//	}
+	//}
+	//auto end = std::chrono::high_resolution_clock::now();
+	//
+	//auto duration1 = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+	//
+	//std::cout << "cmap: " << duration1.count() << std::endl;
+	//
+	//// get time
+	//start = std::chrono::high_resolution_clock::now();
+	//{
+	//	smap sm;
+	//
+	//	std::cout << "capacity: " << sm.bucket_count() << std::endl;
+	//
+	//	for (int i = 0; i < iterations; ++i) {
+	//		sm["key" + std::to_string(i)] = "value" + std::to_string(i);
+	//	}
+	//	end = std::chrono::high_resolution_clock::now();
+	//}
+	//
+	//auto duration2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+	//
+	//std::cout << "smap: " << duration2.count() << std::endl;
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+	//return 0;
 
 
 	// signal handler
@@ -156,7 +205,7 @@ int main(int ac, char** av) {
 			std::cout << std::endl;
 		});
 
-		//return 0;
+		return 0;
 
 		//m.debug();
 

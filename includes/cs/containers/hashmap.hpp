@@ -165,7 +165,7 @@ namespace cs {
 
 			/* default size */
 			enum : size_type {
-				DEFAULT_SIZE = 127U
+				DEFAULT_SIZE = 1U
 			};
 
 			/* load factor */
@@ -292,6 +292,28 @@ namespace cs {
 								  cs::forward<___params>(___args)...);
 					}
 
+			}
+
+			/* contains */
+			auto contains(const key_type& ___ky) const noexcept -> bool {
+
+				// hash key
+				const auto hash = cs::hash_(___ky);
+				auto index = hash % _capacity;
+
+				// find empty slot
+				for (size_type q = 1U; _data[index] != nullptr; ++q) {
+
+					// check hash and file exists
+					if (_data[index]->_hash == hash
+					 && cs::get<const key_type>(_data[index]->_pair) == ___ky)
+						return true;
+
+					// quadratic probing
+					index = (index + (q * q)) % _capacity;
+				}
+
+				return false;
 			}
 
 

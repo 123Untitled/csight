@@ -39,7 +39,6 @@ auto cs::parser::_parse(void) -> void {
 
 	// execute action
 	(this->*_actions[_transition->_action])();
-
 }
 
 
