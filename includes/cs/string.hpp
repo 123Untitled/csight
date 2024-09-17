@@ -9,6 +9,8 @@
 #include "cs/memory/memcpy.hpp"
 #include "cs/string_view.hpp"
 
+#include <limits>
+
 #include <iostream>
 
 
